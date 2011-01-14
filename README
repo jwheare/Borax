@@ -1,66 +1,45 @@
-HELLO WORLD
+HELLO WORLD:
 
-# app/route.class.php
-    <?php
-    
-    namespace App;
-    
-    class Route {
-        static function getPatterns () {
-            return array(
-                '/^$/' => 'home',
-            );
-        }
+// app/route.class.php
+<?php
+
+namespace App;
+
+class Route {
+    static function getPatterns () {
+        return array(
+            '/^$/' => 'home',
+        );
     }
+}
 
-# app/controller
-    <?php
-    
-    namespace App\Controller;
-    use Core\Controller;
-    
-    class HomeHtml extends Controller\Html {
-        public function index () {
-            $this->title = "My First Borax Page";
-            $this->message = "Hello World";
-            return $this->response;
-        }
+// app/controller
+<?php
+
+namespace App\Controller;
+use Core\Controller;
+
+class HomeHtml extends Controller\Html {
+    public function index () {
+        $this->title = "My First Borax Page";
+        $this->message = "Hello World";
+        return $this->response;
     }
+}
 
-# app/template/home/index.tpl.php
-    <html>
-        <head>
-            <title><?php out($this->title); ?></title>
-        </head>
-        <body>
-            <?php out($this->message); ?>
-        </body>
-    </html>
+// app/template/home/index.tpl.php
+<html>
+    <head>
+        <title><?php out($this->title); ?></title>
+    </head>
+    <body>
+        <?php out($this->message); ?>
+    </body>
+</html>
 
-# apache-vhost.conf
-    <VirtualHost *:80>
-        SetEnv ROOT_DIR "/path/to/install"
-        
-        ServerName an.example.com
-        DocumentRoot "/path/to/install/public"
-        
-        <Directory /path/to/install/public>
-            Options -Indexes +FollowSymLinks -MultiViews
-            
-            RewriteEngine on
-            
-            # Strip trailing slash
-            RewriteCond %{REQUEST_FILENAME} !-d
-            RewriteRule ^(.+)/$    /$1         [R=permanent,L]
-            
-            # Simulate MultiViews
-            RewriteCond %{REQUEST_FILENAME} !-f
-            RewriteCond %{REQUEST_FILENAME} !-d
-            RewriteRule ^(.*)$     index.php   [L,QSA]
-        </Directory>
-    </VirtualHost>
+Now install apache-vhost.conf, fix the paths, restart apache and go!
 
-FILES
+FILES:
 
 apache-vhost.conf               // apache virtualhost configuration
 
