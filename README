@@ -39,7 +39,21 @@ class HomeHtml extends Controller\Html {
 
 Now install apache-vhost.conf, fix the paths, restart apache and go!
 
-FILES:
+ARCHITECTURE:
+
+1. Apache rewrites all URLs to public/index.php
+2. index.php creates a web app runner (Core\Web) and calls handleRequest();
+3. App runner a) creates a dispatcher (Core\Dispatcher) with the app (App\Route) and base url routes
+              b) encapsulates the HTTP request $request (Core\Request)
+              c) encapsulates a user session (App\Session) and injects it into the request
+              d) calls processRequest($request) on the dispatcher
+4. Dispatcher maps the request to a controller (App\Controller) and calls generateResponse() on it
+5. Controller either a) renders a template and returns a response (Core\Response)
+                  or b) throws an error or redirect (Core\HttpStatus)
+6. Dispatcher returns a response (Core\Response), converting error or redirect if needed first.
+7. App runner calls respond() on the response which sets headers and echos output.
+
+FILE OVERVIEW:
 
 apache-vhost.conf               // apache virtualhost configuration
 
