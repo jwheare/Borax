@@ -1,0 +1,104 @@
+apache-vhost.conf               // apache virtualhost configuration
+
+app/                            // Example app
+|
+--- conf/                       // Conf
+|   --- conf.php                // global conf
+|   --- gethostname().conf.php  // local host specific conf. rename this to the result of gethostname() . ".conf.php"
+|
+--- controller/                 // Controllers
+|   --- home.controller.php     // GET /                  - home page
+|   --- signout.controller.php  // GET /signout           - deletes session cookie and throws a redirect
+|   --- twitter.controller.php  // GET /twitter/start     - throws a redirect to start twitter oauth process
+|                               // GET /twitter/callback  - handles twitter oauth callback, signs in an throws a redirect
+|
+--- init.php                    // App setup/service registration
+|
+--- lib/                        // Lib directory on include path for app specific libs
+|
+--- model/                      // Models
+|   --- person.class.php        // Person database model
+|
+--- route.class.php             // Url routes
+|
+--- service/                    // Services
+|   --- db.service.php          // mysql database
+|   --- memcache.service.php    // memcache
+|
+--- session.class.php           // User sessions
+|
+--- template/                   // Templates
+|   --- error.tpl.php           // http errors
+|   --- footer.inc.tpl.php      // global footer
+|   --- header.inc.tpl.php      // global header
+|   --- home/
+|       --- index.tpl.php       // home page
+|   --- _page/                  // static page templates
+
+script/                         // example script
+--- tweet.php                   // updates twitter status for an authorised user
+
+util.php                        // global php helper functions
+
+core/                           // Core framework classes
+|
+--- controller/                 // Abstract controllers
+|   --- base.class.php          // Base
+|   --- form.class.php          // Form (POST) -> must redirect
+|   --- html.class.php          // HTML (GET)
+|   --- json.class.php          // Base JSON
+|   --- jsondelete.class.php
+|   --- jsonget.class.php
+|   --- jsonpost.class.php
+|   --- jsonput.class.php
+|   --- page.class.php          // Static html page (GET)
+|   --- shared.class.php        // Shared logic
+|
+--- db.class.php                // PDO wrapper
+|
+--- dispatcher.class.php        // Maps urls to controllers, passing in request objects and returning responses
+|
+--- dump.class.php              // Debug dump helper
+|
+--- email.class.php             // mb_send_mail wrapper with templating. 
+|                               // writes to mail.log instead of sending if define(DISABLE_EMAILS, true);
+|
+--- httprequest.class.php       // curl wrapper
+|
+--- httpstatus/                 // HTTP status classes
+|   --- base.class.php
+|   --- baseerror.class.php
+|   --- baseredirect.class.php
+|   --- ...                     // Individual status classes
+|
+--- model.class.php             // ORM
+|
+--- relationshipcache.class.php // Foreign key lookup cache
+|
+--- request.class.php           // Incoming HTTP request wrapper
+|                               // Wraps $_GET $_POST $_COOKIE and $_SERVER
+|
+--- response/                   // Response classes
+|   --- base.class.php
+|   --- html.class.php
+|   --- htmlerror.class.php
+|   --- json.class.php
+|   --- jsonerror.class.php
+|   --- redirect.class.php
+|
+--- servicemanager.class.php    // Static global services manager
+|
+--- session.class.php           // Base Session class. Wraps $_SESSION. Manages cache headers
+|
+--- twitter.class.php           // Twitter API client
+|
+--- url.class.php               // URL encoding, building, parsing class
+|
+--- web.class.php               // Web app runner
+
+init.php                        // Framework initialisation
+
+# Web document root
+
+public/                         // Put non static and non framework files in here
+--- index.php                   // Delegates to web app runner
