@@ -142,6 +142,8 @@ class Twitter {
             'cursor' => $cursor,
         ));
     }
+    // oAuth Step 1 - Get request token
+    // http://oauth.net/core/1.0a/#auth_step1
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-oauth-request_token
     public function getRequestToken(Request $request, $callback = null) {
         $url = $this->buildUrl('oauth/request_token', false);
@@ -152,7 +154,7 @@ class Twitter {
             'oauth_token_secret',
         );
         if ($callback) {
-            $params['oauth_callback'] = $callback;
+            $params['oauth_callback'] = Url::addHost($callback);
             $requiredParams[] = 'oauth_callback_confirmed';
         }
         $response = $this->callUrl($url, $method, $params);
@@ -168,6 +170,8 @@ class Twitter {
         return $requestTokenParams;
     }
     
+    // oAuth Step 2 - Redirect to auth URL
+    // http://oauth.net/core/1.0a/#auth_step2
     public function getAuthorizationUrl($forceLogin = false) {
         // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-oauth-authenticate
         $params = array(
@@ -180,6 +184,8 @@ class Twitter {
         return $url;
     }
     
+    // oAuth Step 3 - Exchange request token stored in the session for an oAuth token and secret.
+    // http://oauth.net/core/1.0a/#auth_step3
     public function getAccessToken($authTokenVerifier) {
         // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-oauth-access_token
         $url = $this->buildUrl('oauth/access_token', false);
