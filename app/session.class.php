@@ -11,20 +11,20 @@ class Session extends \Core\Session {
     const COOKIE = 'session';
     
     public function __construct (Request $request, &$session = null) {
-        parent::__construct($request, $session);
-        
-        // Set backto from querystring
-        if ($backto = $this->request->get('backto')) {
-            $this->set('backto', $backto);
-        }
-        
         // Attempt to load a Person object from the session cookie
-        if ($accessToken = $this->request->cookie(self::COOKIE)) {
+        if ($accessToken = $request->cookie(self::COOKIE)) {
             $person = new Model\Person();
             if ($person->loadByAccess_Token($accessToken)) {
                 // Cache the logged in user object
                 $this->user = $person;
             }
+        }
+        
+        parent::__construct($request, $session);
+        
+        // Set backto from querystring
+        if ($backto = $this->request->get('backto')) {
+            $this->set('backto', $backto);
         }
     }
     
