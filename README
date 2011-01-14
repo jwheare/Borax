@@ -68,7 +68,7 @@ app/                            // Example app
 |   --- home.controller.php     // GET /                  - home page
 |   --- signout.controller.php  // GET /signout           - deletes session cookie and throws a redirect
 |   --- twitter.controller.php  // GET /twitter/start     - throws a redirect to start twitter oauth process
-|                               // GET /twitter/callback  - handles twitter oauth callback, signs in an throws a redirect
+|                               // GET /twitter/callback  - handles twitter oauth callback, signs in, redirects
 |
 |-- init.php                    // App setup/service registration
 |
