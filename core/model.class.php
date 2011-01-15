@@ -68,6 +68,14 @@ class Model extends RelationshipCache {
         }
         return true;
     }
+    protected function getModels ($rows) {
+        $models = array();
+        foreach ($rows as $modelData) {
+            $class = get_called_class();
+            $models[] = new $class($modelData);
+        }
+        return $models;
+    }
     
     private function loadBy($keys, $values) {
         // Prepare the query
@@ -107,11 +115,7 @@ class Model extends RelationshipCache {
         }
         $rows = $this->db()->fetchAll(sprintf($query, "*"), $values);
         // Create an array of models
-        $models = array();
-        foreach ($data as $modelData) {
-            $class = "App\\Model\\{$this->table}";
-            $models[] = new $class($modelData);
-        }
+        $models = $this->getModels($rows);
         return array($models, $total);
     }
     
