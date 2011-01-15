@@ -106,6 +106,16 @@ class Twitter {
         list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'POST', $params);
         return json_decode($response);
     }
+    // http://dev.twitter.com/doc/get/users/profile_image/:screen_name
+    public function getProfileImage($person) {
+        $url = $this->buildUrl("users/profile_image/{$person->twitter_name}.json");
+        $method = 'HEAD';
+        list($response, $httpInfo) = $this->callUrl($url, $method, array(), false);
+        if (!isset($httpInfo['location_header'])) {
+            throw new TwitterException('Missing location header in Twitter response', 502, $method, $url, null, null, '', $httpInfo['response_headers'][$url]);
+        }
+        return $httpInfo['location_header'];
+    }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-users%C2%A0show
     public function getProfileInfo($person) {
         return $this->get('users/show.json', array(
