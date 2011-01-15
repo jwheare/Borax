@@ -280,7 +280,7 @@ class TwitterException extends Exception {
     }
     
     public function __toString() {
-        return __CLASS__ . " {$this->getStatusLine()}: {$this->method} {$this->url}";
+        return get_called_class() . " {$this->getStatusLine()}: {$this->method} {$this->url}";
     }
     public function getStatusLine() {
         return "{$this->getCode()} {$this->getMessage()}";

@@ -161,7 +161,7 @@ class HttpRequestException extends Exception {
     }
     
     public function __toString () {
-        return __CLASS__ . " {$this->httpError->getStatus()}: {$this->method} {$this->url}";
+        return get_called_class() . " {$this->httpError->getStatus()}: {$this->method} {$this->url}";
     }
     public function getHttpError () {
         return $this->httpError;
