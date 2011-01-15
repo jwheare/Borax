@@ -54,6 +54,7 @@ class Model extends RelationshipCache {
             $keyPrefix = "{$keyPrefix}_";
         }
         // Load data into the object
+        $this->beforeLoad($data, $keyPrefix);
         if (array_key_exists("{$keyPrefix}id", $data)) {
             $this->id = $data["{$keyPrefix}id"];
             unset($data["{$keyPrefix}id"]);
@@ -118,6 +119,9 @@ class Model extends RelationshipCache {
         return $this->getAllBy(null, null, $limit);
     }
     
+    protected function beforeLoad(&$data, $keyPrefix = '') {
+        // override in subclass
+    }
     protected function beforeMutate() {
         // override in subclass
     }
