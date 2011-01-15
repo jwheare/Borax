@@ -46,7 +46,7 @@ class Model extends RelationshipCache {
         }
     }
     
-    private function loadData($data, $keyPrefix = '') {
+    protected function loadData($data, $keyPrefix = '') {
         if (!$data) {
             return false;
         }
