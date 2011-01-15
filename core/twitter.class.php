@@ -25,7 +25,7 @@ class Twitter {
     /**
      * API method helpers
     **/
-    protected function callUrl($url, $method, $callParams = array()) {
+    protected function callUrl($url, $method, $callParams = array(), $followLocation = true) {
         $headers = array(
             // http://groups.google.com/group/twitter-development-talk/browse_thread/thread/3c859b7774b1e95d
             "X-Twitter-Content-Type-Accept: application/x-www-form-urlencoded",
@@ -35,7 +35,7 @@ class Twitter {
         }
         try {
             $request = new HttpRequest();
-            list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers);
+            list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers, $followLocation);
         } catch (HTTPRequestException $e) {
             switch ($e->getCode()) {
             case 400:
@@ -67,7 +67,7 @@ class Twitter {
             }
             throw new TwitterException($message, $e->getCode(), $method, $url, $callParams, $headers, $e->getResponse(), $e->getResponseHeaders(), $e->getHttpError());
         }
-        return $response;
+        return array($response, $httpInfo);
     }
     protected function buildUrl($path, $api = true) {
         if ($api) {
@@ -94,12 +94,16 @@ class Twitter {
     /**
      * Public API methods
     **/
+    public function head($url, $params = array()) {
+        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'HEAD', $params);
+        return $httpInfo;
+    }
     public function get($url, $params = array()) {
-        $response = $this->callUrl($this->buildUrl($url), 'GET', $params);
+        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'GET', $params);
         return json_decode($response);
     }
     public function post($url, $params = array()) {
-        $response = $this->callUrl($this->buildUrl($url), 'POST', $params);
+        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'POST', $params);
         return json_decode($response);
     }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-users%C2%A0show
@@ -157,14 +161,14 @@ class Twitter {
             $params['oauth_callback'] = Url::addHost($callback);
             $requiredParams[] = 'oauth_callback_confirmed';
         }
-        $response = $this->callUrl($url, $method, $params);
+        list($response, $httpInfo) = $this->callUrl($url, $method, $params);
         $requestTokenParams = $this->parseBodyString($response);
         if (empty($requestTokenParams)) {
-            throw new TwitterException('Missing parameters in Twitter response', 502, $method, $url, null, null, $response);
+            throw new TwitterException('Missing parameters in Twitter response', 502, $method, $url, $params, null, $response);
         }
         foreach ($requiredParams as $param) {
             if (!isset($requestTokenParams[$param])) {
-                throw new TwitterException("Missing $param in Twitter response", 502, $method, $url, null, null, $response);
+                throw new TwitterException("Missing $param in Twitter response", 502, $method, $url, $params, null, $response);
             }
         }
         return $requestTokenParams;
@@ -190,7 +194,7 @@ class Twitter {
         // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-oauth-access_token
         $url = $this->buildUrl('oauth/access_token', false);
         $method = 'POST';
-        $response = $this->callUrl($url, $method, array(
+        list($response, $httpInfo) = $this->callUrl($url, $method, array(
             'oauth_verifier' => $authTokenVerifier,
         ));
         $accessTokenParams = $this->parseBodyString($response);
