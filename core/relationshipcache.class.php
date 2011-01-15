@@ -24,13 +24,19 @@ abstract class RelationshipCache {
         if (isset($this->cache[$key])) {
             return $this->cache[$key];
         } else {
-            list($class, $column) = $this->relations[$key];
-            $className = "App\\Model\\$class";
+            $relationVars = $this->relations[$key];
+            $relatedClass = $relationVars[0];
+            $relatedColumn = $relationVars[1];
+            $column = $key;
+            if (count($relationVars) === 3) {
+                $column = $relationVars[2];
+            }
+            $className = "App\\Model\\$relatedClass";
             $relationship = new $className();
-            $loadBy = "loadBy" . $column;
-            $relationship->$loadBy($this->$key);
+            $loadBy = "loadBy" . $relatedColumn;
+            $relationship->$loadBy($this->$column);
             if ($relationship->id) {
-                $this->primeCache($key, $relationship);
+                $this->primeCache($column, $relationship);
                 return $relationship;
             }
             return false;
