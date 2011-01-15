@@ -7,12 +7,16 @@ use Core\Url;
 
 class Model extends RelationshipCache {
     
+    var $db = 'db';
     var $table = null;
     protected $columns = array();
     protected $getByColumns = null;
     var $id = null;
     var $creation_date = null;
     var $data = array();
+    public function db () {
+        return service($this->db);
+    }
     public function __construct($data = array(), $keyPrefix = null) {
         $this->loadData($data, $keyPrefix);
     }
@@ -74,7 +78,7 @@ class Model extends RelationshipCache {
         };
         $query = "SELECT * FROM {$this->table} WHERE " . implode(' AND ', $wheres);
         // Execute
-        $row = service('db')->fetch($query, $values);
+        $row = $this->db()->fetch($query, $values);
         // Load data, returns false on non-existence
         return $this->loadData($row);
     }
@@ -90,7 +94,7 @@ class Model extends RelationshipCache {
             $query .= "WHERE " . implode(' AND ', $wheres) . " ";
         }
         // Get the total
-        $total = service('db')->fetchColumn(sprintf($query, "COUNT(id)"), $values);
+        $total = $this->db()->fetchColumn(sprintf($query, "COUNT(id)"), $values);
         // Run the paginated query
         $query .= "ORDER BY $ordering ";
         if ($limit) {
@@ -100,7 +104,7 @@ class Model extends RelationshipCache {
         if ($offset) {
             $query .= "OFFSET $offset ";
         }
-        $data = service('db')->fetchAll(sprintf($query, "*"), $values);
+        $rows = $this->db()->fetchAll(sprintf($query, "*"), $values);
         // Create an array of models
         $models = array();
         foreach ($data as $modelData) {
@@ -167,7 +171,7 @@ class Model extends RelationshipCache {
         }
         $query = "INSERT INTO {$this->table} (" . implode(', ', $keys) . ") VALUES (" . implode(', ', $values) . ")";
         // Execute in a transaction
-        $db = service('db');
+        $db = $this->db();
         $db->beginTransaction();
         $db->execute($query, $data);
         // Load data
@@ -192,7 +196,7 @@ class Model extends RelationshipCache {
         $params = $this->data;
         $params['id'] = $this->id;
         // Execute
-        service('db')->execute($query, $params);
+        $this->db()->execute($query, $params);
         // Callback
         $this->afterMutate();
         $this->afterUpdate();
@@ -209,7 +213,7 @@ class Model extends RelationshipCache {
         $query = "DELETE FROM {$this->table} WHERE `id` = :id";
         $params = array('id' => $this->id);
         // Execute
-        service('db')->execute($query, $params);
+        $this->db()->execute($query, $params);
         // Callback
         $this->afterMutate();
         $this->afterDelete();
@@ -298,7 +302,7 @@ class Model extends RelationshipCache {
         };
         $query = "SELECT COUNT(*) FROM {$this->table} WHERE " . implode(' AND ', $wheres);
         // Execute
-        $total = service('db')->fetchColumn($query, $values);
+        $total = $this->db()->fetchColumn($query, $values);
         return $total;
     }
     public function fuckBitly() {
