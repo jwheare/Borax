@@ -143,3 +143,22 @@ function plur ($count, $string) {
     }
     return $string;
 }
+
+function undefined_method ($method, $class) {
+    $bt = debug_backtrace(false);
+    $file = '';
+    $line = '';
+    for ($i = count($bt) - 1; $i >= 0; $i--) {
+        $frame = $bt[$i];
+        if ($frame['type'] === '->' && $frame['class'] === $class && $frame['function'] === $method) {
+            if ($xdebug_link = ini_get('xdebug.file_link_format')) {
+                $file = ' in <a style="color: black;" href="' . str_replace(array('%f', '%l'), array($frame['file'], $frame['line']), $xdebug_link) . '">' . $frame['file'] . '</a>';
+            } else {
+                $file = " in {$frame['file']}";
+            }
+            $line = " on line {$frame['line']}";
+            break;
+        }
+    }
+    trigger_error("Call to undefined method {$class}->{$method}{$file}{$line}", E_USER_ERROR);
+}
