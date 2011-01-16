@@ -17,20 +17,27 @@ abstract class RelationshipCache {
             }
         }
     }
+    protected function getColumn ($key) {
+        $column = $key;
+        if (isset($this->relations[$key])) {
+            $relationVars = $this->relations[$key];
+            if (count($relationVars) === 3) {
+                $column = $relationVars[2];
+            }
+        }
+        return $column;
+    }
     public function primeCache($key, $value) {
-        $this->cache[$key] = $value;
+        $this->cache[$this->getColumn($key)] = $value;
     }
     protected function getRelationship($key) {
-        if (isset($this->cache[$key])) {
-            return $this->cache[$key];
+        $column = $this->getColumn($key);
+        if (isset($this->cache[$column])) {
+            return $this->cache[$column];
         } else {
             $relationVars = $this->relations[$key];
             $relatedClass = $relationVars[0];
             $relatedColumn = $relationVars[1];
-            $column = $key;
-            if (count($relationVars) === 3) {
-                $column = $relationVars[2];
-            }
             $className = "App\\Model\\$relatedClass";
             $relationship = new $className();
             $loadBy = "loadBy" . $relatedColumn;
