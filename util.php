@@ -136,3 +136,10 @@ function getopts ($options) {
     }
     return getopt($shortopts, $longopts);
 }
+
+function plur ($count, $string) {
+    if ($count !== 1) {
+        $string .= 's';
+    }
+    return $string;
+}
