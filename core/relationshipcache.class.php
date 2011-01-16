@@ -16,6 +16,7 @@ abstract class RelationshipCache {
                 return $this->$key;
             }
         }
+        undefined_method($method, get_called_class());
     }
     protected function getColumn ($key) {
         $column = $key;
