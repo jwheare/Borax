@@ -4,8 +4,8 @@ namespace Core\Response;
 use Core\Request;
 
 class Html extends Base {
-    protected $template;
-    protected $context = array();
+    private $template;
+    private $context = array();
     public function __construct (Request $request) {
         parent::__construct($request);
         $this->setHeader('Content-type', 'text/html; charset=utf-8');
@@ -18,6 +18,11 @@ class Html extends Base {
     public function __set ($name, $value) {
         $this->context[$name] = $value;
     }
+    public function setContext (array $context) {
+        foreach ($context as $key => $value) {
+            $this->context[$key] = $value;
+        }
+    }
     public function setTemplate ($template, array $context = null) {
         $this->template = $template;
         if ($context) {
@@ -29,11 +34,6 @@ class Html extends Base {
     }
     public function templateExists () {
         return file_exists($this->getTemplateFile($this->template));
-    }
-    public function setContext (array $context) {
-        foreach ($context as $key => $value) {
-            $this->$key = $value;
-        }
     }
     public function is_set ($key) {
         return array_key_exists($key, $this->context);

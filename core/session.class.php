@@ -3,8 +3,8 @@
 namespace Core;
 
 class Session {
+    private $session;
     protected $request;
-    protected $_session;
     protected $user = null;
     const SESS_KEY = "session_var";
     
@@ -13,9 +13,9 @@ class Session {
         // We need a reference to the global $_SESSION object so it can store state correctly
         // Assigning by reference doesn't work with ternary operators
         if ($session) {
-            $this->_session =& $session;
+            $this->session =& $session;
         } else {
-            $this->_session =& $_SESSION;
+            $this->session =& $_SESSION;
         }
         
         $this->setCacheHeaders();
@@ -31,11 +31,11 @@ class Session {
     }
     protected function startSession () {
         if (!$this->isStarted()) {
-            if ($this->_session === false) {
-                $this->_session = array();
+            if ($this->session === false) {
+                $this->session = array();
             } else {
                 session_start();
-                $this->_session =& $_SESSION;
+                $this->session =& $_SESSION;
                 // Set the headers again cos session_start() overrides them with session_cache_limiter()
                 $this->nocache();
             }
@@ -51,7 +51,7 @@ class Session {
         }
     }
     public function isStarted () {
-        return is_array($this->_session);
+        return is_array($this->session);
     }
     // TODO use request class
     public function hasCookie () {
@@ -59,17 +59,17 @@ class Session {
     }
     public function set ($key, $value) {
         $this->startSession();
-        $this->_session[$key] = $value;
+        $this->session[$key] = $value;
     }
     public function get ($key, $default = false) {
         $this->startSession();
-        return array_key_exists($key, $this->_session) ? $this->_session[$key] : $default;
+        return array_key_exists($key, $this->session) ? $this->session[$key] : $default;
     }
     public function delete ($key) {
         $this->startSession();
         $value = $this->get($key);
         $this->set($key, null);
-        unset($this->_session[$key]);
+        unset($this->session[$key]);
         return $value;
     }
     public function nocache () {

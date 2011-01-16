@@ -5,30 +5,29 @@ namespace Core;
 class Request {
     protected $url;
     protected $urlParts = array();
-    protected $_server = array();
-    protected $_cookie = array();
-    protected $_get = array();
-    protected $_post = array();
-    protected $_put = array();
-    protected $_delete = array();
     protected $session;
+    private $server = array();
+    private $cookie = array();
+    private $get = array();
+    private $post = array();
+    private $put = array();
+    private $delete = array();
     /**
      * Parse input variables
     **/
     public function __construct ($server = null, $input = null, $cookie = null) {
-        $this->_server = $server ? $server : $_SERVER;
-        $this->_cookie = $cookie ? $cookie : $_COOKIE;
+        $this->server = $server ? $server : $_SERVER;
+        $this->cookie = $cookie ? $cookie : $_COOKIE;
         $this->url = $this->server('request_uri');
         $this->urlParts = Url::extractUrlParts($this->url);
         // Parse GET variables
         if (isset($this->urlParts['queryparams'])) {
-            $this->_get = $this->urlParts['queryparams'];
+            $this->get = $this->urlParts['queryparams'];
         }
         // Parse non GET input variables
         $method = strtolower($this->getMethod());
         if (in_array($method, array('post', 'put', 'delete'))) {
-            $inputVar = "_$method";
-            parse_str($input ? $input : file_get_contents("php://input"), $this->$inputVar);
+            parse_str($input ? $input : file_get_contents("php://input"), $this->$method);
         }
     }
     public function setSession (Session $session) {
@@ -42,25 +41,25 @@ class Request {
     **/
     public function server ($key, $default = null) {
         $key = strtoupper($key);
-        return array_key_exists($key, $this->_server) ? $this->_server[$key] : $default;
+        return array_key_exists($key, $this->server) ? $this->server[$key] : $default;
     }
     public function cookie ($key, $default = null) {
-        return array_key_exists($key, $this->_cookie) ? $this->_cookie[$key] : $default;
+        return array_key_exists($key, $this->cookie) ? $this->cookie[$key] : $default;
     }
     public function get ($key, $default = null) {
-        return array_key_exists($key, $this->_get) ? $this->_get[$key] : $default;
+        return array_key_exists($key, $this->get) ? $this->get[$key] : $default;
     }
     public function post ($key, $default = null) {
-        return array_key_exists($key, $this->_post) ? $this->_post[$key] : $default;
+        return array_key_exists($key, $this->post) ? $this->post[$key] : $default;
     }
     public function postget ($key, $default = null) {
         return $this->post($key, $this->get($key, $default));
     }
     public function put ($key, $default = null) {
-        return array_key_exists($key, $this->_put) ? $this->_put[$key] : $default;
+        return array_key_exists($key, $this->put) ? $this->put[$key] : $default;
     }
     public function delete ($key, $default = null) {
-        return array_key_exists($key, $this->_delete) ? $this->_delete[$key] : $default;
+        return array_key_exists($key, $this->delete) ? $this->delete[$key] : $default;
     }
     
     /**

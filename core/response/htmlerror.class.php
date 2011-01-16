@@ -12,6 +12,7 @@ class HtmlError extends Html {
         $this->setTemplate('error', array(
             'title' => $this->getStatus(),
             'message' => $this->exception->getMessage(),
+            'exception' => $this->exception,
         ));
         $this->exception->processResponse($this);
     }
