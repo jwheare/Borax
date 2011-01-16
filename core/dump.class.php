@@ -27,10 +27,9 @@ class Dump {
         if ($highlight) {
             $output .= '</div>';
         }
+        self::$output .= $output;
         if (headers_sent()) {
-            echo $output;
-        } else {
-            self::$output .= $output;
+            self::flush();
         }
     }
     public static function light ($var) {
@@ -47,8 +46,7 @@ class Dump {
         }
     }
     public static function flush () {
-        // Force headers to send
-        echo ob_get_flush();
+        echo ob_get_clean();
         echo self::$output;
         self::$output = '';
     }
