@@ -25,28 +25,96 @@ function service($serviceName) {
     return $manager->get($serviceName);
 }
 
+
+function truncate($string, $truncate, $linked = false) {
+    if ($linked) {
+        $truncated = '';
+        $isAt = false;
+        $inAtPotential = false;
+        $inLink = false;
+        $inAtLink = false;
+        $inTag = false;
+        $length = mb_strlen($string);
+        $pointer = 0;
+        // Set truncate to 0 indexed
+        $truncate--;
+        while ($pointer < $length) {
+            // Current character
+            $char = mb_substr($string, $pointer, 1);
+            // Potential @ link coming up
+            $isAt = $char == '@' || $char == '＠';
+            if ($isAt) {
+                $inAtPotential = true;
+            }
+            // Only truncate if we're not in a link
+            if (!$inLink && !$inAtLink) {
+                // Truncate before a trailing @
+                if ($pointer == $truncate && $isAt) {
+                    break;
+                }
+                // Truncate at given length
+                if ($pointer > $truncate) {
+                    break;
+                }
+            }
+            // Open tag, in link
+            if ($char == '<') {
+                $inLink = true;
+                // Entering an @ link
+                if ($inAtPotential) {
+                    $inAtLink = true;
+                    // Turn off potential
+                    $inAtPotential = false;
+                }
+            } else if (!$isAt) {
+                // Turn off potential unless it was only just set
+                $inAtPotential = false;
+            }
+            if ($char == '>') {
+                if ($inTag) {
+                    $inAt = false;
+                    $inLink = false;
+                    $inAtLink = false;
+                    $inTag = false;
+                } else {
+                    // We're now in the tag body, the next > will be the closer
+                    $inTag = true;
+                }
+            }
+            // Append the character
+            $truncated .= $char;
+            // Move along pointer
+            $pointer++;
+        }
+    } else {
+        $truncated = mb_strcut($string, 0, $truncate);
+    }
+    if (mb_strlen($truncated) < mb_strlen($string)) {
+        $truncated .= '…';
+    }
+    return $truncated;
+}
 class LinkifyCallback {
     public $style;
+    public $truncate;
     
     public function handle ($matches) {
-        $url = preg_replace("/^https?:\/\//i", '', $matches[2]);
+        $url = preg_replace("/^http:\/\//i", '', $matches[1]);
         $url = preg_replace("/^www\./i", '', $url);
         $url = preg_replace("/\/$/", '', $url);
-        $fullUrl = $matches[2];
-        if (strtolower($matches[3]) == 'www.') {
-            $fullUrl = "http://$fullUrl";
-        }
+        $fullUrl = $matches[1];
         $style = '';
         if ($this->style) {
             $style = ' style="' . $this->style . '"';
         }
-        return $matches[1] . '<a href="' . $fullUrl . '" title="' . $fullUrl . '"' . $style . '>' . truncate($url, 50) . '</a>';
+        return '<a href="' . $fullUrl . '" title="' . $fullUrl . '"' . $style . '>' . truncate($url, $this->truncate) . '</a>';
     }
 }
-define('AUTOLINK_REGEX', "/(^|[\s(:']+)(((?:https?:\/\/)|(?:www\.))[^.-]+?\S+[^\.\s?!,:;\]}=')+])/i");
-function linkify($string, $style = '') {
+define('AUTOLINK_REGEX', "/\b(([a-z][\w-]+:(?:\/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}\/)(?:[^\s()<>]+|\((?:[^\s()<>]+|(?:\([^\s()<>]+\)))*\))+(?:\((?:[^\s()<>]+|(\(?:[^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))/i");
+function linkify($string, $style = '', $truncate = 50) {
     $linkifyCallback = new LinkifyCallback();
     $linkifyCallback->style = $style;
+    $linkifyCallback->truncate = $truncate;
     return preg_replace_callback(
         AUTOLINK_REGEX,
         array($linkifyCallback, 'handle'),
