@@ -49,8 +49,6 @@ class HttpRequest {
         $url = Url::build($url, $requestParams);
         curl_setopt_array($this->curl, array(
             CURLOPT_HTTPGET    => true,
-            CURLOPT_POST       => false,
-            CURLOPT_POSTFIELDS => false,
         ));
         return $url;
     }
@@ -68,14 +66,11 @@ class HttpRequest {
     protected function preparePut($requestParams = array()) {
         curl_setopt_array($this->curl, array(
             CURLOPT_PUT        => true,
-            CURLOPT_POST       => false,
             CURLOPT_POSTFIELDS => $requestParams,
         ));
     }
     protected function prepareDelete($requestParams = array()) {
         curl_setopt_array($this->curl, array(
-            CURLOPT_CUSTOMREQUEST => 'DELETE',
-            CURLOPT_POST          => false,
             CURLOPT_POSTFIELDS    => $requestParams,
         ));
     }
@@ -85,6 +80,7 @@ class HttpRequest {
         curl_setopt_array($this->curl, array(
             CURLOPT_FOLLOWLOCATION => $followLocation,
             CURLOPT_COOKIE         => $this->cookieString,
+            CURLOPT_CUSTOMREQUEST  => $method,
         ));
         $this->response_headers = array();
         // Build the request
@@ -110,11 +106,10 @@ class HttpRequest {
         curl_setopt($this->curl, CURLOPT_URL, $url);
         // Send request response
         $response = curl_exec($this->curl);
-        // echo("$response\n==============\n");
-        // echo("url: $url\nparams: " . Url::encodePairsToString($requestParams) . "\n==============\n");
-        // echo(curl_getinfo($this->curl, CURLINFO_HEADER_OUT));
         $httpInfo = curl_getinfo($this->curl);
+        $httpInfo['request_headers'] = curl_getinfo($this->curl, CURLINFO_HEADER_OUT);
         $httpInfo['response_headers'] = $this->response_headers;
+        // echo("$response\n==============\nurl: $url\nparams: " . Url::encodePairsToString($requestParams) . "\n==============\n{$httpInfo['request_headers']}\n");
         self::$lastRequestInfo = $httpInfo;
         $httpCode = $httpInfo['http_code'];
         // Store cookies
