@@ -8,14 +8,14 @@ class Twitter {
     const KEY = TWITTER_KEY;
     const SECRET = TWITTER_SECRET;
     
-    const ROOT_URL = 'http://twitter.com/';
-    const API_ROOT_URL = 'https://api.twitter.com/';
+    const API_ROOT = 'http://api.twitter.com';
     const API_VERSION = 1;
     
     var $token = null;
     var $secret = null;
     
     var $authCalls = true;
+    var $followLocation = true;
     
     public function __construct($token = null, $secret = null) {
         if ($token && $secret) {
@@ -25,7 +25,7 @@ class Twitter {
     /**
      * API method helpers
     **/
-    protected function callUrl($url, $method, $callParams = array(), $followLocation = true) {
+    protected function callUrl($url, $method, $callParams = array()) {
         $headers = array(
             // http://groups.google.com/group/twitter-development-talk/browse_thread/thread/3c859b7774b1e95d
             "X-Twitter-Content-Type-Accept: application/x-www-form-urlencoded",
@@ -35,7 +35,7 @@ class Twitter {
         }
         try {
             $request = new HttpRequest();
-            list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers, $followLocation);
+            list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers, $this->followLocation);
         } catch (HTTPRequestException $e) {
             switch ($e->getCode()) {
             case 400:
@@ -69,13 +69,12 @@ class Twitter {
         }
         return array($response, $httpInfo);
     }
-    protected function buildUrl($path, $api = true) {
-        if ($api) {
-            $baseUrl = self::API_ROOT_URL . self::API_VERSION . '/';
-        } else {
-            $baseUrl = self::ROOT_URL;
+    protected function buildUrl($path, $versioned = true) {
+        $baseUrl = self::API_ROOT;
+        if ($versioned) {
+            $baseUrl .= '/' . self::API_VERSION;
         }
-        return $baseUrl . $path;
+        return "$baseUrl/$path";
     }
     protected function parseBodyString($body) {
         $params = array();
@@ -86,9 +85,6 @@ class Twitter {
     public function setCredentials($token, $secret) {
         $this->token = $token;
         $this->secret = $secret;
-    }
-    public function setCredentialsFromPerson($person) {
-        $this->setCredentials($person->twitter_access_token, $person->twitter_access_token_secret);
     }
     
     /**
@@ -107,30 +103,33 @@ class Twitter {
         return json_decode($response);
     }
     // http://dev.twitter.com/doc/get/users/profile_image/:screen_name
-    public function getProfileImage($person) {
-        $url = $this->buildUrl("users/profile_image/{$person->twitter_name}.json");
+    public function getProfileImage($screenName) {
+        $url = $this->buildUrl("users/profile_image/{$screenName}.json");
         $method = 'HEAD';
-        list($response, $httpInfo) = $this->callUrl($url, $method, array(), false);
+        $this->authCalls = false;
+        $this->followLocation = false;
+        list($response, $httpInfo) = $this->callUrl($url, $method, array());
+        $twitter->authCalls = true;
+        $this->followLocation = true;
         if (!isset($httpInfo['location_header'])) {
             throw new TwitterException('Missing location header in Twitter response', 502, $method, $url, null, null, '', $httpInfo['response_headers'][$url]);
         }
         return $httpInfo['location_header'];
     }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-users%C2%A0show
-    public function getProfileInfo($person) {
+    public function getProfileInfo($userId) {
         return $this->get('users/show.json', array(
-            'user_id' => $person->twitter_id,
+            'user_id' => $userId,
         ));
     }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-followers%C2%A0ids
-    public function getFollowers($person, $cursor = '-1') {
+    public function getFollowers($userId, $cursor = '-1') {
         return $this->get('followers/ids.json', array(
-            'user_id' => $person->twitter_id,
+            'user_id' => $userId,
             'cursor' => $cursor,
         ));
     }
-    public function updateStatus($person, $status, $reply = null, $place = null, $lat = null, $lon = null) {
-        $this->setCredentialsFromPerson($person);
+    public function updateStatus($status, $reply = null, $place = null, $lat = null, $lon = null) {
         $params = array(
             'status' => $status,
         );
@@ -145,14 +144,13 @@ class Twitter {
         }
         return $this->post('statuses/update.json', $params);
     }
-    public function retweet($person, $id) {
-        $this->setCredentialsFromPerson($person);
+    public function retweet($id) {
         return $this->post("statuses/retweet/$id.json");
     }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-friends%C2%A0ids
-    public function getFriends($person, $cursor = '-1') {
+    public function getFriends($userId, $cursor = '-1') {
         return $this->get('friends/ids.json', array(
-            'user_id' => $person->twitter_id,
+            'user_id' => $userId,
             'cursor' => $cursor,
         ));
     }
@@ -161,7 +159,7 @@ class Twitter {
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-oauth-request_token
     public function getRequestToken(Request $request, $callback = null) {
         $url = $this->buildUrl('oauth/request_token', false);
-        $method = 'GET';
+        $method = 'POST';
         $params = array();
         $requiredParams = array(
             'oauth_token',
