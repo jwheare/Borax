@@ -122,21 +122,6 @@ function linkify($string, $style = '', $truncate = 50) {
     );
 }
 
-// Parse command line options to an array keyed to long option names
-// Takes an array of long -> short option name mappings
-function getopts ($options) {
-    $shortopts = '';
-    $longopts = array();
-    foreach ($options as $long => $short) {
-        $longopts[] = "$long:";
-        if ($short) {
-            $longopts[] = "$short:";
-            $shortopts .= "$short:";
-        }
-    }
-    return getopt($shortopts, $longopts);
-}
-
 function plur ($count, $string) {
     if ($count !== 1) {
         $string .= 's';
@@ -151,7 +136,7 @@ function undefined_method ($method, $class) {
     for ($i = count($bt) - 1; $i >= 0; $i--) {
         $frame = $bt[$i];
         if ($frame['type'] === '->' && $frame['class'] === $class && $frame['function'] === $method) {
-            if ($xdebug_link = ini_get('xdebug.file_link_format')) {
+            if (ini_get('html_errors') && $xdebug_link = ini_get('xdebug.file_link_format')) {
                 $file = ' in <a style="color: black;" href="' . str_replace(array('%f', '%l'), array($frame['file'], $frame['line']), $xdebug_link) . '">' . $frame['file'] . '</a>';
             } else {
                 $file = " in {$frame['file']}";
