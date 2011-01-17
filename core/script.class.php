@@ -14,18 +14,31 @@ abstract class Script {
     
     public function __construct () {
         $this->setArgs();
-        $this->dryRun = array_key_exists('dry-run', $this->args);
+        $this->dryRun = $this->argExists('dry-run');
     }
     
+    protected function onEnd () {
+        // overrite in subclass
+    }
+    protected function onError () {
+        // overrite in subclass
+    }
+    
+    public function argvExists ($key) {
+        return array_key_exists($key, $this->argv);
+    }
     public function argv ($key, $default = null) {
-        return array_key_exists($key, $this->argv) ? $this->argv[$key] : $default;
+        return $this->argvExists($key) ? $this->argv[$key] : $default;
     }
     
+    public function argExists ($key) {
+        return array_key_exists($key, $this->args);
+    }
     public function arg ($key, $default = null) {
-        return array_key_exists($key, $this->args) ? $this->args[$key] : $default;
+        return $this->argExists($key) ? $this->args[$key] : $default;
     }
     private function setArg ($key, $value) {
-        if (array_key_exists($key, $this->args)) {
+        if ($this->argExists($key)) {
             $this->args[$key] = array_merge((array) $this->args[$key], (array) $value);
         } else {
             $this->args[$key] = $value;
@@ -70,10 +83,18 @@ abstract class Script {
     protected function out ($string) {
         echo $string;
     }
-    protected function error ($string = null) {
-        die("$string\n");
+    protected function error ($string = null, $status = 1) {
+        $this->onError();
+        if ($string) {
+            $this->out("$string\n");
+        }
+        exit($status);
     }
-    protected function end () {
-        die();
+    protected function end ($string = null) {
+        $this->onEnd();
+        if ($string) {
+            $this->out("$string\n");
+        }
+        exit(0);
     }
 }
