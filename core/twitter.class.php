@@ -149,6 +149,21 @@ class Twitter {
     public function retweet($id) {
         return $this->post("statuses/retweet/$id.json");
     }
+    public function userTimeline ($userId, $sinceId = null, $maxId = null, $count = null) {
+        $params = array(
+            'user_id' => $userId,
+            'trim_user' => true,
+            'count' => $count,
+            'include_rts' => true,
+        );
+        if ($sinceId) {
+            $params['since_id'] = $sinceId;
+        }
+        if ($maxId) {
+            $params['max_id'] = $maxId;
+        }
+        return $this->get('statuses/user_timeline.json', $params);
+    }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-friends%C2%A0ids
     public function getFriends($userId, $cursor = '-1') {
         return $this->get('friends/ids.json', array(
