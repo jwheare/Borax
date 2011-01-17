@@ -76,20 +76,4 @@ abstract class Script {
     protected function end () {
         die();
     }
-    protected function runJobAt ($job, $time) {
-        // Build at schedule
-        $atCmd = "at -t " . escapeshellarg(date("YmdHi.s", $time));
-        $this->out("[" . date("H:m:s", $time) . "] $atCmd -> $job\n");
-        
-        if ($this->dryRun) {
-            return;
-        }
-        
-        $atProc = popen($atCmd, 'w');
-        if (!is_resource($atProc)) {
-            return false;
-        }
-        fwrite($atProc, "$job > /dev/null 2>&1");
-        pclose($atProc);
-    }
 }
