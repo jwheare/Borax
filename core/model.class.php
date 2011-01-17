@@ -74,6 +74,7 @@ class Model extends RelationshipCache {
         foreach ($this->columns as $column) {
             $this->data[$column] = isset($data[$keyPrefix . $column]) ? $data[$keyPrefix . $column] : null;
         }
+        $this->afterLoad();
         return true;
     }
     protected function getModels ($rows) {
@@ -169,6 +170,9 @@ class Model extends RelationshipCache {
     }
     
     protected function beforeLoad(&$data, $keyPrefix = '') {
+        // override in subclass
+    }
+    protected function afterLoad() {
         // override in subclass
     }
     protected function beforeMutate() {
@@ -467,30 +471,5 @@ class ModelException extends Exception {
     }
     public function getStatusLine() {
         return "{$this->getCode()} {$this->getMessage()}";
-    }
-    // TODO fix for new framework
-    public function handle() {
-        $status = $this->getStatusLine();
-        if (acceptJson()) {
-            $errorData = array(
-                'error' => $this->getMessage(),
-                'code' => $this->getCode(),
-            );
-            if ($previous = $this->getPrevious()) {
-                $errorData['previous'] = (string) $previous;
-            }
-            errorJson($status, $errorData);
-        } else {
-            // User friendly info
-            $errorHeading = "Model error";
-            $errorMessage = "<p>{$this->getMessage()}</p>";
-            // Debug info
-            $errorMessage .= '<div class="debug">';
-            $errorMessage .= '<h2>Debug info</h2>';
-            $errorMessage .= "<p>({$this->getCode()})</p>";
-            
-            $errorMessage .= '</div>';
-            error($status, $errorHeading, $errorMessage);
-        }
     }
 }
