@@ -147,3 +147,12 @@ function undefined_method ($method, $class) {
     }
     trigger_error("Call to undefined method {$class}->{$method}{$file}{$line}", E_USER_ERROR);
 }
+
+function array_to_tsv_line($data_array, $filehandler = null) {
+    $tsv_line = implode("\t", $data_array);
+    if ($filehandler) {
+        return fwrite($filehandler, "$tsv_line\n");
+    } else {
+        return $tsv_line;
+    }
+}

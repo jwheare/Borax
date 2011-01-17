@@ -3,17 +3,18 @@
 namespace Core;
 use DateTime;
 use Exception;
-use Core\Url;
 
 class Model extends RelationshipCache {
     
-    var $db = 'db';
-    var $table = null;
+    protected $db = 'db';
     protected $columns = array();
-    protected $getByColumns = null;
-    var $id = null;
-    var $creation_date = null;
-    var $data = array();
+    protected $getByColumns;
+    protected $columnSelects = array();
+    
+    public $table;
+    public $id;
+    public $creation_date;
+    public $data = array();
     public function db () {
         return service($this->db);
     }
@@ -32,6 +33,13 @@ class Model extends RelationshipCache {
             }
         }
         return parent::__call($method, $args);
+    }
+    
+    private function getCommonData() {
+        return array(
+            'id' => $this->id,
+            'creation_date' => $this->creation_date,
+        );
     }
     
     // Overload getter and setter to store data
@@ -79,48 +87,85 @@ class Model extends RelationshipCache {
     
     private function loadBy($keys, $values) {
         // Prepare the query
-        $keys = (array) $keys;
-        $values = (array) $values;
+        if (!is_array($keys)) {
+            $keys = array($keys);
+        }
+        if (!is_array($values)) {
+            $values = array($values);
+        }
         $wheres = array();
-        foreach ($keys as $key) {
-            $wheres[] = "`$key` = ?";
-        };
-        $query = "SELECT * FROM {$this->table} WHERE " . implode(' AND ', $wheres);
+        $flatValues = array();
+        foreach (array_combine($keys, $values) as $key => $value) {
+            $placeholder = '?';
+            if ($value instanceof Model) {
+                $flatValues[] = $value->id;
+            } else if ($value instanceof DateTime) {
+                $flatValues[] = $this->sqlDate($value);
+            } else if ($value instanceof Point) {
+                $flatValues[] = $this->sqlPoint($value);
+                $placeholder = "GeomFromText($placeholder)";
+            } else {
+                $flatValues[] = $value;
+            }
+            $wheres[] = "`$key` = $placeholder";
+        }
+        $query = "SELECT {$this->getColumnsSql()} FROM {$this->table} WHERE " . implode(' AND ', $wheres);
         // Execute
-        $row = $this->db()->fetch($query, $values);
+        $row = $this->db()->fetch($query, $flatValues);
         // Load data, returns false on non-existence
         return $this->loadData($row);
     }
-    private function getAllBy($keys = null, $values = null, $limit = null, $page = 1, $ordering = "creation_date DESC") {
+    private function getAllByData($keys = null, $values = null, $limit = null, $page = 1, $ordering = "creation_date DESC") {
         $query = "SELECT %s FROM $this->table ";
         if ($keys) {
-            $keys = (array) $keys;
-            $values = (array) $values;
+            if (!is_array($keys)) {
+                $keys = array($keys);
+            }
+            if (!is_array($values)) {
+                $values = array($values);
+            }
             $wheres = array();
-            foreach ($keys as $key) {
-                $wheres[] = "`$key` = ?";
-            };
+            $flatValues = array();
+            foreach (array_combine($keys, $values) as $key => $value) {
+                $placeholder = '?';
+                if ($value instanceof Model) {
+                    $flatValues[] = $value->id;
+                } else if ($value instanceof DateTime) {
+                    $flatValues[] = $this->sqlDate($value);
+                } else if ($value instanceof Point) {
+                    $flatValues[] = $this->sqlPoint($value);
+                    $placeholder = "GeomFromText($placeholder)";
+                } else {
+                    $flatValues[] = $value;
+                }
+                $wheres[] = "`$key` = $placeholder";
+            }
             $query .= "WHERE " . implode(' AND ', $wheres) . " ";
+        } else {
+            $flatValues = $values;
         }
         // Get the total
-        $total = $this->db()->fetchColumn(sprintf($query, "COUNT(id)"), $values);
+        $total = $this->db()->fetchColumn(sprintf($query, "COUNT(id)"), $flatValues);
         // Run the paginated query
         $query .= "ORDER BY $ordering ";
         if ($limit) {
             $query .= "LIMIT $limit ";
+            $offset = ($page - 1) * $limit;
+            if ($offset) {
+                $query .= "OFFSET $offset ";
+            }
         }
-        $offset = ($page - 1) * $limit;
-        if ($offset) {
-            $query .= "OFFSET $offset ";
-        }
-        $rows = $this->db()->fetchAll(sprintf($query, "*"), $values);
+        $rows = $this->db()->fetchAll(sprintf($query, $this->getColumnsSql()), $flatValues);
+        return array($rows, $total);
+    }
+    public function getAllBy($keys = null, $values = null, $limit = null, $page = 1, $ordering = "creation_date DESC") {
+        list($rows, $total) = $this->getAllByData($keys, $values, $limit, $page, $ordering);
         // Create an array of models
         $models = $this->getModels($rows);
         return array($models, $total);
     }
-    
-    public function getAll($limit = null) {
-        return $this->getAllBy(null, null, $limit);
+    public function getAll($limit = null, $page = 1, $ordering = "creation_date DESC") {
+        return $this->getAllBy(null, null, $limit, $page, $ordering);
     }
     
     protected function beforeLoad(&$data, $keyPrefix = '') {
@@ -157,31 +202,39 @@ class Model extends RelationshipCache {
         $this->beforeInsert();
         // Prepare the query
         $values = array();
-        $data = $this->data;
-        foreach ($this->columns as $k) {
-            if (array_key_exists($k, $data)) {
-                $keys[] = "`$k`";
-                $values[] = ":$k";
-                if ($data[$k] instanceof DateTime) {
-                    $data[$k] = $this->$k->format('Y-m-d H:i:s');
+        $flatData = array();
+        foreach ($this->columns as $col) {
+            if (array_key_exists($col, $this->data)) {
+                $placeholder = ":$col";
+                if ($this->$col instanceof Model) {
+                    $flatData[$col] = $this->$col->id;
+                } else if ($this->$col instanceof DateTime) {
+                    $flatData[$col] = $this->sqlDate($this->$col);
+                } else if ($this->$col instanceof Point) {
+                    $flatData[$col] = $this->sqlPoint($this->$col);
+                    $placeholder = "GeomFromText($placeholder)";
+                } else {
+                    $flatData[$col] = $this->$col;
                 }
+                $keys[] = "`$col`";
+                $values[] = $placeholder;
             }
         }
         if ($this->creation_date) {
             $keys[] = '`creation_date`';
             $values[] = ':creation_date';
-            $data['creation_date'] = $this->getCreationDateData();
+            $flatData['creation_date'] = $this->sqlDate($this->creation_date);
         }
         if ($this->id) {
             $keys[] = '`id`';
             $values[] = ':id';
-            $data['id'] = $this->id;
+            $flatData['id'] = $this->id;
         }
         $query = "INSERT INTO {$this->table} (" . implode(', ', $keys) . ") VALUES (" . implode(', ', $values) . ")";
         // Execute in a transaction
         $db = $this->db();
         $db->beginTransaction();
-        $db->execute($query, $data);
+        $db->execute($query, $flatData);
         // Load data
         $lastId = $db->lastInsertId();
         $this->loadById($lastId);
@@ -197,14 +250,31 @@ class Model extends RelationshipCache {
         $this->beforeUpdate();
         // Prepare the query
         $sets = array();
+        $flatData = array();
         foreach ($this->columns as $col) {
-            $sets[] = "`$col` = :$col";
+            if (array_key_exists($col, $this->data)) {
+                $placeholder = ":$col";
+                if ($this->$col instanceof Model) {
+                    $flatData[$col] = $this->$col->id;
+                } else if ($this->$col instanceof DateTime) {
+                    $flatData[$col] = $this->sqlDate($this->$col);
+                } else if ($this->$col instanceof Point) {
+                    $flatData[$col] = $this->sqlPoint($this->$col);
+                    $placeholder = "GeomFromText($placeholder)";
+                } else {
+                    $flatData[$col] = $this->$col;
+                }
+                $sets[] = "`$col` = $placeholder";
+            }
+        }
+        if ($this->creation_date) {
+            $sets[] = "`creation_date` = :creation_date";
+            $flatData['creation_date'] = $this->sqlDate($this->creation_date);
         }
         $query = "UPDATE {$this->table} SET " . implode(', ', $sets) . " WHERE `id` = :id";
-        $params = $this->data;
-        $params['id'] = $this->id;
+        $flatData['id'] = $this->id;
         // Execute
-        $this->db()->execute($query, $params);
+        $this->db()->execute($query, $flatData);
         // Callback
         $this->afterMutate();
         $this->afterUpdate();
@@ -273,8 +343,20 @@ class Model extends RelationshipCache {
     public function getCreationDate() {
         return $this->creation_date ? $this->creation_date->format('D j M Y g:ia') : null;
     }
-    public function getCreationDateData() {
-        return $this->creation_date ? $this->creation_date->format('Y-m-d H:i:s') : null;
+    public function mysqlDate (DateTime $dateTime) {
+        return $dateTime->format('Y-m-d H:i:s');
+    }
+    public function sqlDate ($dateTime) {
+        if (!$dateTime instanceof DateTime) {
+            $dateTime = new DateTime("@$dateTime");
+        }
+        return $this->mysqlDate($dateTime);
+    }
+    public function mysqlPoint (Point $point) {
+        return "POINT({$point->latitude} {$point->longitude})";
+    }
+    public function sqlPoint (Point $point) {
+        return $this->mysqlPoint($point);
     }
     public function getEncodedId() {
         return encodeNumber($this->id);
@@ -284,16 +366,27 @@ class Model extends RelationshipCache {
         return $model && ($this->table === $model->table) && ($this->id === $model->id);
     }
     
-    public function getColumnsSql($table = null, $qualified = true) {
-        if (!$table) {
-            $table = $this->table;
+    protected function getColumnSelect($column, $qualified) {
+        $select = "{$this->table}.{$column}";
+        if (isset($this->columnSelects[$column])) {
+            $select = sprintf($this->columnSelects[$column], $select);
+            if (!$qualified) {
+                $select .= " AS {$column}";
+            }
         }
+        if ($qualified) {
+            $select .= " AS {$this->table}_{$column}";
+        }
+        return $select;
+    }
+    public function getColumnsSql($qualified = false) {
         $selects = array(
-            "{$table}.id" . ($qualified ? " AS {$table}_id" : ""),
-            "{$table}.creation_date" . ($qualified ? " AS {$table}_creation_date" : ""),
+            "{$this->table}.id" . ($qualified ? " AS {$this->table}_id" : ""),
+            "{$this->table}.creation_date" . ($qualified ? " AS {$this->table}_creation_date" : ""),
         );
         foreach ($this->columns as $col) {
-            $selects[] = "{$table}.{$col}" . ($qualified ? " AS {$table}_{$col}" : "");
+            $select = $this->getColumnSelect($col, $qualified);
+            $selects[] = $select;
         }
         return implode(', ', $selects);
     }
@@ -302,8 +395,12 @@ class Model extends RelationshipCache {
     }
     public function totalBy($keys = array(), $values = array()) {
         // Prepare the query
-        $keys = (array) $keys;
-        $values = (array) $values;
+        if (!is_array($keys)) {
+            $keys = array($keys);
+        }
+        if (!is_array($values)) {
+            $values = array($values);
+        }
         $wheres = array();
         foreach ($keys as $key) {
             $wheres[] = "`$key` = ?";
@@ -318,6 +415,44 @@ class Model extends RelationshipCache {
         header("Link: <$shorter>; rev=canonical");
         return $shorter;
     }
+    public function getFieldsSql($withCommonData = false) {
+        if ($withCommonData) {
+            $fields = array_merge(array_keys($this->getCommonData()), $this->columns);
+        } else {
+            $fields = $this->columns;
+        }
+        $fieldsSql = '("' . implode('", "', $fields) . '")';
+        return $fieldsSql;
+    }
+    public function tsvHeader($filehandler = null, $withCommonData = false) {
+        if ($withCommonData) {
+            $fields = array_merge(array_keys($this->getCommonData()), $this->columns);
+        } else {
+            $fields = $this->columns;
+        }
+        return array_to_tsv_line($fields, $filehandler);
+    }
+    public function toTsv($filehandler = null, $withCommonData = false) {
+        if ($withCommonData) {
+            $fields = array_merge($this->getCommonData(), $this->data);
+        } else {
+            $fields = $this->data;
+        }
+        $flatValues = array();
+        foreach ($fields as $column => $value) {
+            if ($value instanceof Model) {
+                $flatValues[] = $value->id;
+            } else if ($value instanceof DateTime) {
+                $flatValues[] = $value->getTimestamp();
+            } else if ($value instanceof Point) {
+                $flatValues[] = "{$value->latitude} {$value->longitude}";
+            } else {
+                $flatValues[] = $value;
+            }
+        }
+        return array_to_tsv_line($flatValues, $filehandler);
+    }
+
 }
 
 class ModelException extends Exception {
