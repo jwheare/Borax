@@ -9,6 +9,7 @@ define('ROOT_DIR',       $_SERVER['ROOT_DIR']);
 // Web app
 define('APP_DIR',        ROOT_DIR . '/app');
 define('SCRIPT_DIR',     ROOT_DIR . '/script');
+define('LOG_DIR',        ROOT_DIR . '/log');
 define('CONF_DIR',       APP_DIR  . '/conf');
 define('CONTROLLER_DIR', APP_DIR  . '/controller');
 define('EMAIL_DIR',      APP_DIR  . '/email');
