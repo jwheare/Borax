@@ -119,6 +119,11 @@ class Twitter {
             'user_id' => $userId,
         ));
     }
+    public function getProfileInfoFromName($screenName) {
+        return $this->get('users/show.json', array(
+            'screen_name' => $screenName,
+        ));
+    }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-followers%C2%A0ids
     public function getFollowers($userId, $cursor = '-1') {
         return $this->get('followers/ids.json', array(
