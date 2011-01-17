@@ -14,7 +14,6 @@ class Twitter {
     var $token = null;
     var $secret = null;
     
-    var $authCalls = true;
     var $followLocation = true;
     
     public function __construct($token = null, $secret = null) {
@@ -25,12 +24,12 @@ class Twitter {
     /**
      * API method helpers
     **/
-    protected function callUrl($url, $method, $callParams = array()) {
+    protected function callUrl($url, $method, $callParams = array(), $forceAuth = false) {
         $headers = array(
             // http://groups.google.com/group/twitter-development-talk/browse_thread/thread/3c859b7774b1e95d
             "X-Twitter-Content-Type-Accept: application/x-www-form-urlencoded",
         );
-        if ($this->authCalls) {
+        if ($this->token || $forceAuth) {
             $headers[] = $this->buildAuthorizationHeader($url, $method, $callParams);
         }
         try {
@@ -106,17 +105,15 @@ class Twitter {
     public function getProfileImage($screenName) {
         $url = $this->buildUrl("users/profile_image/{$screenName}.json");
         $method = 'HEAD';
-        $this->authCalls = false;
         $this->followLocation = false;
         list($response, $httpInfo) = $this->callUrl($url, $method, array());
-        $twitter->authCalls = true;
         $this->followLocation = true;
         if (!isset($httpInfo['location_header'])) {
             throw new TwitterException('Missing location header in Twitter response', 502, $method, $url, null, null, '', $httpInfo['response_headers'][$url]);
         }
         return $httpInfo['location_header'];
     }
-    // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-users%C2%A0show
+    // http://dev.twitter.com/doc/get/users/show
     public function getProfileInfo($userId) {
         return $this->get('users/show.json', array(
             'user_id' => $userId,
@@ -169,7 +166,7 @@ class Twitter {
             $params['oauth_callback'] = Url::addHost($callback);
             $requiredParams[] = 'oauth_callback_confirmed';
         }
-        list($response, $httpInfo) = $this->callUrl($url, $method, $params);
+        list($response, $httpInfo) = $this->callUrl($url, $method, $params, true);
         $requestTokenParams = $this->parseBodyString($response);
         if (empty($requestTokenParams)) {
             throw new TwitterException('Missing parameters in Twitter response', 502, $method, $url, $params, null, $response);
