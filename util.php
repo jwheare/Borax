@@ -123,7 +123,7 @@ function linkify($string, $style = '', $truncate = 50) {
 }
 
 function plur ($count, $string) {
-    if ($count !== 1) {
+    if ($count != 1) {
         $string .= 's';
     }
     return $string;
