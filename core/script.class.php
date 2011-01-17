@@ -6,6 +6,7 @@ abstract class Script {
     private $defaultOptions = array(
         'dry-run' => null,
     );
+    private $argv = array();
     private $args = array();
     
     protected $dryRun;
@@ -14,6 +15,10 @@ abstract class Script {
     public function __construct () {
         $this->setArgs();
         $this->dryRun = array_key_exists('dry-run', $this->args);
+    }
+    
+    public function argv ($key, $default = null) {
+        return array_key_exists($key, $this->argv) ? $this->argv[$key] : $default;
     }
     
     public function arg ($key, $default = null) {
@@ -30,6 +35,7 @@ abstract class Script {
     // Parse command line options to an array keyed to long option names
     // Takes an array of long -> short option name mappings
     private function setArgs () {
+        $this->argv = $_SERVER["argv"];
         $shortopts = '';
         $longopts = array();
         $longToShort = array_merge($this->defaultOptions, $this->options);
@@ -73,7 +79,7 @@ abstract class Script {
     protected function runJobAt ($job, $time) {
         // Build at schedule
         $atCmd = "at -t " . escapeshellarg(date("YmdHi.s", $time));
-        $this->out("[" . date("g:m:s a", $time) . "] $atCmd -> $job\n");
+        $this->out("[" . date("H:m:s", $time) . "] $atCmd -> $job\n");
         
         if ($this->dryRun) {
             return;
