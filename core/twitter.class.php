@@ -131,7 +131,7 @@ class Twitter {
             'cursor' => $cursor,
         ));
     }
-    public function updateStatus($status, $reply = null, $place = null, $lat = null, $lon = null) {
+    public function updateStatus($status, $reply = null, $place = null, Point $point = null) {
         $params = array(
             'status' => $status,
         );
@@ -140,9 +140,9 @@ class Twitter {
         }
         if ($place) {
             $params['place_id'] = $place;
-        } else if ($lat && $lon) {
-            $params['lat'] = $lat;
-            $params['long'] = $lon;
+        } else if ($point) {
+            $params['lat'] = $point->latitude;
+            $params['long'] = $point->longitude;
         }
         return $this->post('statuses/update.json', $params);
     }
@@ -313,50 +313,5 @@ class TwitterException extends Exception {
     }
     public function getStatusLine() {
         return "{$this->getCode()} {$this->getMessage()}";
-    }
-    // TODO fix for new framework
-    public function handle() {
-        $status = $this->previous ? $this->previous->getStatusLine() : $this->getStatusLine();
-        if (acceptJson()) {
-            errorJson($status, array(
-                'error' => $this->getMessage(),
-                'code' => $this->getCode(),
-                'method' => $this->method,
-                'url' => $this->url,
-                'headers' => $this->headers,
-                'params' => $this->params,
-                'response' => $this->response,
-                'responseHeaders' => $this->responseHeaders,
-            ));
-        } else {
-            // User friendly info
-            $errorHeading = "Twitter sign in error";
-            $errorMessage = "<p>{$this->getMessage()}</p>";
-            // Debug info
-            $errorMessage .= '<div class="debug">';
-            $errorMessage .= '<h2>Debug info</h2>';
-            $errorMessage .= "<p>({$this->getCode()}) {$this->method} {$this->url}</p>";
-            
-            if (!empty($this->headers)) {
-                $errorMessage .= '<h2>Request headers</h2>';
-                $errorMessage .= '<pre>' . safe(implode("\n", $this->headers)) . '</pre>';
-            }
-            
-            if (!empty($this->params)) {
-                $errorMessage .= '<h2>Request parameters</h2>';
-                $errorMessage .= '<pre>' . safe(print_r(Url::encodePairs($this->params), true)) . '</pre>';
-            }
-            
-            if ($this->response) {
-                $errorMessage .= '<h2>HTTP response body</h2>';
-                $errorMessage .= '<pre>' . safe($this->response) . '</pre>';
-            }
-            if (!empty($this->responseHeaders)) {
-                $errorMessage .= '<h2>HTTP response headers</h2>';
-                $errorMessage .= '<pre>' . safe(print_r(Url::encodePairs($this->responseHeaders), true)) . '</pre>';
-            }
-            $errorMessage .= '</div>';
-            error($status, $errorHeading, $errorMessage);
-        }
     }
 }
