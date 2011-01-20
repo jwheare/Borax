@@ -12,8 +12,6 @@ abstract class RelationshipCache {
             $key = strtolower($matches[1]);
             if (isset($this->relations[$key])) {
                 return $this->getRelationship($key);
-            } else {
-                return $this->$key;
             }
         }
         undefined_method($method, get_called_class());

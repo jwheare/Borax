@@ -19,6 +19,9 @@ class Model extends RelationshipCache {
         return service($this->db);
     }
     public function __construct($data = array(), $keyPrefix = null) {
+        if ($keyPrefix === true) {
+            $keyPrefix = $this->table;
+        }
         $this->loadData($data, $keyPrefix);
     }
     public function __call($method, $args) {
@@ -50,6 +53,10 @@ class Model extends RelationshipCache {
     }
     public function __set($name, $value) {
         if (in_array($name, $this->columns)) {
+            if ($value instanceof Model) {
+                $this->primeCache($name, $value);
+                $value = $value->id;
+            }
             $this->data[$name] = $value;
         }
     }
@@ -72,16 +79,28 @@ class Model extends RelationshipCache {
             unset($data["{$keyPrefix}creation_date"]);
         }
         foreach ($this->columns as $column) {
-            $this->data[$column] = isset($data[$keyPrefix . $column]) ? $data[$keyPrefix . $column] : null;
+            $value = null;
+            if (isset($data[$keyPrefix . $column])) {
+                $value = $data[$keyPrefix . $column];
+            }
+            if ($value instanceof Model) {
+                $this->primeCache($column, $value);
+                $value = $value->id;
+            }
+            $this->data[$column] = $value;
         }
         $this->afterLoad();
         return true;
     }
-    protected function getModels ($rows) {
+    protected function getModels ($rows, $cache = array()) {
         $models = array();
         foreach ($rows as $modelData) {
             $class = get_called_class();
-            $models[] = new $class($modelData);
+            $model = new $class($modelData);
+            foreach ($cache as $key => $value) {
+                $model->primeCache($key, $value);
+            }
+            $models[] = $model;
         }
         return $models;
     }
