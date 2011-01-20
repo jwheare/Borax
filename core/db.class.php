@@ -43,6 +43,7 @@ class DB {
         if ($this->connection) {
             return call_user_func_array(array($this->connection, $method), $args);
         }
+        undefined_method($method, get_called_class());
     }
     
     protected function connect() {
