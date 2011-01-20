@@ -9,14 +9,28 @@ abstract class Script {
     private $argv = array();
     private $args = array();
     
+    private $end;
+    private $error;
+    
     protected $dryRun;
     protected $options = array();
     
     public function __construct () {
         $this->setArgs();
         $this->dryRun = $this->argExists('dry-run');
+        
+        register_shutdown_function(array($this, 'shutdownHandler'));
     }
     
+    public function shutdownHandler () {
+        if (!$this->end) {
+            if ($lastError = error_get_last()) {
+                $this->error("Error {$lastError['type']}: {$lastError['message']} in {$lastError['file']} on line {$lastError['line']}");
+            } else {
+                $this->end();
+            }
+        }
+    }
     protected function onEnd () {
         // overrite in subclass
     }
@@ -84,17 +98,17 @@ abstract class Script {
         echo $string;
     }
     protected function error ($string = null, $status = 1) {
+        $this->end = true;
+        $this->error = true;
         $this->onError();
         if ($string) {
             $this->out("$string\n");
         }
         exit($status);
     }
-    protected function end ($string = null) {
+    protected function end () {
+        $this->end = true;
         $this->onEnd();
-        if ($string) {
-            $this->out("$string\n");
-        }
         exit(0);
     }
 }
