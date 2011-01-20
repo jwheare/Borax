@@ -53,7 +53,7 @@ class Twitter {
                 $message = 'Twitter’s having server troubles. Check their status: http://status.twitter.com/</a>';
                 break;
             case 502:
-                $message = "Twitter’s down or being upgraded. Try again later";
+                $message = "Twitter may be down or undergoing an upgrade, or this was just a slow query. Try again later";
                 break;
             case 503:
                 $message = "Twitter’s temporarily overloaded. Try again";
