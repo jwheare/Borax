@@ -62,7 +62,6 @@ abstract class Script {
     // Parse command line options to an array keyed to long option names
     // Takes an array of long -> short option name mappings
     private function setArgs () {
-        $this->argv = $_SERVER["argv"];
         $shortopts = '';
         $longopts = array();
         $longToShort = array_merge($this->defaultOptions, $this->options);
@@ -87,6 +86,15 @@ abstract class Script {
         $args = array();
         foreach ($opts as $key => $val) {
             $this->setArg($normLookup[$key], $val);
+        }
+        // Set Argv
+        $this->argv = $_SERVER["argv"];
+        foreach ($this->argv as $arg) {
+            if (strpos($arg, '-') === 0) {
+                if (!array_key_exists(ltrim($arg, '-'), $normLookup)) {
+                    $this->error("Invalid argument: $arg");
+                }
+            }
         }
     }
     abstract public function run();
