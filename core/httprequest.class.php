@@ -128,7 +128,7 @@ class HttpRequest {
         if ($response === false) {
             // cURL error
             $curlError = "cURL error: " . curl_error($this->curl) . " (" . curl_errno($this->curl) . ")";
-            throw new HttpRequestException(HttpStatus\Base::mapCodeToStatus(504), $method, $url, $requestParams, null, $this->response_headers[$url], $curlError);
+            throw new HttpRequestException(HttpStatus\Base::mapCodeToStatus(504), $method, $url, $requestParams, null, null, $curlError);
         }
         if (!$followLocation && $httpCode > 300 && $httpCode < 400) {
             // Helpfully extract the location header
