@@ -36,7 +36,7 @@ class Twitter {
             $request = new HttpRequest();
             list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers, $this->followLocation);
         } catch (HTTPRequestException $e) {
-            switch ($e->getCode()) {
+            switch ($e->getHttpCode()) {
             case 400:
                 $message = "Invalid Twitter request";
                 break;
@@ -64,7 +64,7 @@ class Twitter {
             if ($eMessage = $e->getMessage()) {
                 $message .= " - $eMessage";
             }
-            throw new TwitterException($message, $e->getCode(), $method, $url, $callParams, $headers, $e->getResponse(), $e->getResponseHeaders(), $e->getHttpError());
+            throw new TwitterException($message, $e->getCode(), $e->getMethod(), $e->getUrl(), $callParams, $headers, $e->getResponse(), $e->getResponseHeaders(), $e->getHttpError());
         }
         return array($response, $httpInfo);
     }

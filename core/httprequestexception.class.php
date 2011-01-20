@@ -18,14 +18,26 @@ class HttpRequestException extends Exception {
         $this->response = $response;
         $this->responseHeaders = $responseHeaders;
         $this->httpError = new $httpError($message, $this);
-        parent::__construct($message, $this->httpError->getCode());
+        parent::__construct($message, $this->getHttpCode());
     }
     
     public function __toString () {
-        return get_called_class() . " {$this->httpError->getStatus()}: {$this->method} {$this->url}";
+        return get_called_class() . " {$this->getHttpStatus()}: {$this->getMethod()} {$this->getUrl()}";
+    }
+    public function getUrl() {
+        return $this->url;
+    }
+    public function getMethod() {
+        return $this->method;
     }
     public function getHttpError () {
         return $this->httpError;
+    }
+    public function getHttpCode () {
+        return $this->getHttpError()->getCode();
+    }
+    public function getHttpStatus () {
+        return $this->getHttpError()->getStatus();
     }
     public function getResponse () {
         return $this->response;
