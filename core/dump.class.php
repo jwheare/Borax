@@ -28,7 +28,7 @@ class Dump {
             $output .= '</div>';
         }
         self::$output .= $output;
-        if (headers_sent()) {
+        if (!headers_sent()) {
             self::flush();
         }
     }
