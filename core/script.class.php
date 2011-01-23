@@ -110,7 +110,7 @@ abstract class Script {
         $this->error = true;
         $this->onError();
         if ($string) {
-            $this->out("$string\n");
+            error_log($string);
         }
         exit($status);
     }
