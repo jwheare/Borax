@@ -2,6 +2,7 @@
 
 date_default_timezone_set('Europe/London');
 mb_internal_encoding('utf-8');
+setlocale(LC_ALL, 'en_GB.UTF-8');
 
 // Autoload paths
 define('ROOT_DIR',       $_SERVER['ROOT_DIR']);
