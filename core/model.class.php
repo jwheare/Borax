@@ -135,6 +135,42 @@ class Model extends RelationshipCache {
         // Load data, returns false on non-existence
         return $this->loadData($row);
     }
+    public function total() {
+        return $this->totalBy();
+    }
+    public function totalBy($keys = null, $values = null) {
+        // Prepare the query
+        if ($keys) {
+            if (!is_array($keys)) {
+                $keys = array($keys);
+            }
+            if (!is_array($values)) {
+                $values = array($values);
+            }
+            $wheres = array();
+            $flatValues = array();
+            foreach (array_combine($keys, $values) as $key => $value) {
+                $placeholder = '?';
+                if ($value instanceof Model) {
+                    $flatValues[] = $value->id;
+                } else if ($value instanceof DateTime) {
+                    $flatValues[] = $this->sqlDate($value);
+                } else if ($value instanceof Point) {
+                    $flatValues[] = $this->sqlPoint($value);
+                    $placeholder = "GeomFromText($placeholder)";
+                } else {
+                    $flatValues[] = $value;
+                }
+                $wheres[] = "`$key` = $placeholder";
+            }
+        } else {
+            $flatValues = $values;
+        }
+        $query = "SELECT COUNT(*) FROM {$this->table} WHERE " . implode(' AND ', $wheres);
+        // Execute
+        $total = $this->db()->fetchColumn($query, $flatValues);
+        return $total;
+    }
     private function getAllByData($keys = null, $values = null, $limit = null, $page = 1, $ordering = "creation_date DESC") {
         $query = "SELECT %s FROM $this->table ";
         if ($keys) {
@@ -412,26 +448,6 @@ class Model extends RelationshipCache {
             $selects[] = $select;
         }
         return implode(', ', $selects);
-    }
-    public function total() {
-        return $this->totalBy();
-    }
-    public function totalBy($keys = array(), $values = array()) {
-        // Prepare the query
-        if (!is_array($keys)) {
-            $keys = array($keys);
-        }
-        if (!is_array($values)) {
-            $values = array($values);
-        }
-        $wheres = array();
-        foreach ($keys as $key) {
-            $wheres[] = "`$key` = ?";
-        };
-        $query = "SELECT COUNT(*) FROM {$this->table} WHERE " . implode(' AND ', $wheres);
-        // Execute
-        $total = $this->db()->fetchColumn($query, $values);
-        return $total;
     }
     public function fuckBitly() {
         $shorter = Url::addHost($this->getShortUrl(), shortHost());
