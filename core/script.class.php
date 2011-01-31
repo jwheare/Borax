@@ -44,6 +44,9 @@ abstract class Script {
     public function argv ($key, $default = null) {
         return $this->argvExists($key) ? $this->argv[$key] : $default;
     }
+    public function getArgv () {
+        return $this->argv;
+    }
     
     public function argExists ($key) {
         return array_key_exists($key, $this->args);
@@ -62,6 +65,11 @@ abstract class Script {
     // Parse command line options to an array keyed to long option names
     // Takes an array of long -> short option name mappings
     private function setArgs () {
+        // Set Argv
+        $this->argv = $_SERVER["argv"];
+        // Remove script name
+        array_shift($this->argv);
+        // Parse named args
         $shortopts = '';
         $longopts = array();
         $longToShort = array_merge($this->defaultOptions, $this->options);
@@ -69,9 +77,11 @@ abstract class Script {
         foreach ($longToShort as $long => $short) {
             // Add lookup values for the normalised long name
             $normLong = str_replace(':', '', $long);
-            $normShort = str_replace(':', '', $short);
             $normLookup[$normLong] = $normLong;
-            $normLookup[$normShort] = $normLong;
+            if ($short) {
+                $normShort = str_replace(':', '', $short);
+                $normLookup[$normShort] = $normLong;
+            }
             // Build getopt arguments
             $longopts[] = $long;
             if ($short) {
@@ -80,22 +90,35 @@ abstract class Script {
                 $shortopts .= $short;
             }
         }
-        // Parse options
         $opts = getopt($shortopts, $longopts);
         // Set args
-        $args = array();
         foreach ($opts as $key => $val) {
             $this->setArg($normLookup[$key], $val);
         }
-        // Set Argv
-        $this->argv = $_SERVER["argv"];
-        foreach ($this->argv as $arg) {
+        foreach ($this->argv as $i => $arg) {
             if (strpos($arg, '-') === 0) {
-                if (!array_key_exists(ltrim($arg, '-'), $normLookup)) {
+                // Check for invalid argument
+                if ($arg[1] === '-') {
+                    $argNormParts = explode('=', ltrim($arg, '-'));
+                    $argNorm = $argNormParts[0];
+                } else {
+                    $argNorm = $arg[1];
+                }
+                if (array_key_exists($argNorm, $normLookup)) {
+                    // Remove named from argv
+                    unset($this->argv[$i]);
+                    $inline = ($arg[1] !== '-') && (strlen($arg) > 2);
+                    if (!$inline && $this->arg($normLookup[$argNorm])) {
+                        if (count(explode('=', $arg)) == 1) {
+                            unset($this->argv[$i+1]);
+                        }
+                    }
+                } else {
                     $this->error("Invalid argument: $arg");
                 }
             }
         }
+        $this->argv = array_values($this->argv);
     }
     abstract public function run();
     
