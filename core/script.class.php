@@ -128,12 +128,15 @@ abstract class Script {
     protected function out ($string) {
         echo $string;
     }
+    protected function warn ($string) {
+        error_log($string);
+    }
     protected function error ($string = null, $status = 1) {
         $this->end = true;
         $this->error = true;
         $this->onError();
         if ($string) {
-            error_log($string);
+            $this->warn($string);
         }
         exit($status);
     }
