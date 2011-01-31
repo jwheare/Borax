@@ -89,16 +89,16 @@ class Twitter {
     /**
      * Public API methods
     **/
-    public function head($url, $params = array()) {
-        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'HEAD', $params);
+    public function head($url, $params = array(), $forceAuth = false) {
+        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'HEAD', $params, $forceAuth);
         return $httpInfo;
     }
-    public function get($url, $params = array()) {
-        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'GET', $params);
+    public function get($url, $params = array(), $forceAuth = false) {
+        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'GET', $params, $forceAuth);
         return json_decode($response);
     }
-    public function post($url, $params = array()) {
-        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'POST', $params);
+    public function post($url, $params = array(), $forceAuth = false) {
+        list($response, $httpInfo) = $this->callUrl($this->buildUrl($url), 'POST', $params, $forceAuth);
         return json_decode($response);
     }
     // http://dev.twitter.com/doc/get/users/profile_image/:screen_name
@@ -122,6 +122,16 @@ class Twitter {
     public function getProfileInfoFromName($screenName) {
         return $this->get('users/show.json', array(
             'screen_name' => $screenName,
+        ));
+    }
+    public function lookupProfileInfoFromNames($screenNames) {
+        return $this->get('users/lookup.json', array(
+            'screen_name' => implode(',', $screenNames),
+        ));
+    }
+    public function lookupProfileInfo($userIds) {
+        return $this->get('users/lookup.json', array(
+            'user_id' => implode(',', $userIds),
         ));
     }
     // http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-followers%C2%A0ids
