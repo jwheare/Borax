@@ -168,7 +168,7 @@ class Model extends RelationshipCache {
         }
         $query = "SELECT COUNT(*) FROM {$this->table} WHERE " . implode(' AND ', $wheres);
         // Execute
-        $total = $this->db()->fetchColumn($query, $flatValues);
+        $total = (int) $this->db()->fetchColumn($query, $flatValues);
         return $total;
     }
     private function getAllByData($keys = null, $values = null, $limit = null, $page = 1, $ordering = "creation_date DESC") {
@@ -201,7 +201,7 @@ class Model extends RelationshipCache {
             $flatValues = $values;
         }
         // Get the total
-        $total = $this->db()->fetchColumn(sprintf($query, "COUNT(id)"), $flatValues);
+        $total = (int) $this->db()->fetchColumn(sprintf($query, "COUNT(id)"), $flatValues);
         // Run the paginated query
         $query .= "ORDER BY $ordering ";
         if ($limit) {
