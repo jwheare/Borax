@@ -61,6 +61,33 @@ class Model extends RelationshipCache {
         }
     }
     
+    private function flattenValueMysql ($value, $placeholder = '?') {
+        $flatValue = $value;
+        if ($value instanceof Model) {
+            $flatValue = $value->id;
+        } else if ($value instanceof DateTime) {
+            $flatValue = $this->sqlDate($value);
+        } else if ($value instanceof Point) {
+            $flatValue = $this->sqlPoint($value);
+            $placeholder = "GeomFromText($placeholder)";
+        }
+        return array($flatValue, $placeholder);
+    }
+    private function flattenValueSql ($value, $placeholder = '?') {
+        return $this->flattenValueMysql($value, $placeholder);
+    }
+    private function flattenValueTsv ($value) {
+         if ($value instanceof Model) {
+            return $value->id;
+        } else if ($value instanceof DateTime) {
+            return $value->getTimestamp();
+        } else if ($value instanceof Point) {
+            return "{$value->latitude} {$value->longitude}";
+        } else {
+            return $value;
+        }
+    }
+    
     protected function loadData($data, $keyPrefix = '') {
         if (!$data) {
             return false;
@@ -116,20 +143,21 @@ class Model extends RelationshipCache {
         $wheres = array();
         $flatValues = array();
         foreach (array_combine($keys, $values) as $key => $value) {
-            $placeholder = '?';
-            if ($value instanceof Model) {
-                $flatValues[] = $value->id;
-            } else if ($value instanceof DateTime) {
-                $flatValues[] = $this->sqlDate($value);
-            } else if ($value instanceof Point) {
-                $flatValues[] = $this->sqlPoint($value);
-                $placeholder = "GeomFromText($placeholder)";
+            if (is_array($value)) {
+                $orPlaceholders = array();
+                foreach ($value as $orValue) {
+                    list ($flatOrValue, $orPlaceholder) = $this->flattenValueSql($orValue);
+                    $flatValues[] = $flatOrValue;
+                    $orPlaceholders[] = $orPlaceholder;
+                }
+                $wheres[] = "`$key` in (". implode(',', $orPlaceholders) . ")";
             } else {
-                $flatValues[] = $value;
+                list ($flatValue, $placeholder) = $this->flattenValueSql($value);
+                $flatValues[] = $flatValue;
+                $wheres[] = "`$key` = $placeholder";
             }
-            $wheres[] = "`$key` = $placeholder";
         }
-        $query = "SELECT {$this->getColumnsSql()} FROM {$this->table} WHERE " . implode(' AND ', $wheres);
+        $query = "SELECT {$this->getColumnsSql()} FROM {$this->table} WHERE " . implode(' AND ', $wheres) . " LIMIT 1";
         // Execute
         $row = $this->db()->fetch($query, $flatValues);
         // Load data, returns false on non-existence
@@ -150,18 +178,19 @@ class Model extends RelationshipCache {
             $wheres = array();
             $flatValues = array();
             foreach (array_combine($keys, $values) as $key => $value) {
-                $placeholder = '?';
-                if ($value instanceof Model) {
-                    $flatValues[] = $value->id;
-                } else if ($value instanceof DateTime) {
-                    $flatValues[] = $this->sqlDate($value);
-                } else if ($value instanceof Point) {
-                    $flatValues[] = $this->sqlPoint($value);
-                    $placeholder = "GeomFromText($placeholder)";
+                if (is_array($value)) {
+                    $orPlaceholders = array();
+                    foreach ($value as $orValue) {
+                        list ($flatOrValue, $orPlaceholder) = $this->flattenValueSql($orValue);
+                        $flatValues[] = $flatOrValue;
+                        $orPlaceholders[] = $orPlaceholder;
+                    }
+                    $wheres[] = "`$key` in (". implode(',', $orPlaceholders) . ")";
                 } else {
-                    $flatValues[] = $value;
+                    list ($flatValue, $placeholder) = $this->flattenValueSql($value);
+                    $flatValues[] = $flatValue;
+                    $wheres[] = "`$key` = $placeholder";
                 }
-                $wheres[] = "`$key` = $placeholder";
             }
         } else {
             $flatValues = $values;
@@ -183,18 +212,19 @@ class Model extends RelationshipCache {
             $wheres = array();
             $flatValues = array();
             foreach (array_combine($keys, $values) as $key => $value) {
-                $placeholder = '?';
-                if ($value instanceof Model) {
-                    $flatValues[] = $value->id;
-                } else if ($value instanceof DateTime) {
-                    $flatValues[] = $this->sqlDate($value);
-                } else if ($value instanceof Point) {
-                    $flatValues[] = $this->sqlPoint($value);
-                    $placeholder = "GeomFromText($placeholder)";
+                if (is_array($value)) {
+                    $orPlaceholders = array();
+                    foreach ($value as $orValue) {
+                        list ($flatOrValue, $orPlaceholder) = $this->flattenValueSql($orValue);
+                        $flatValues[] = $flatOrValue;
+                        $orPlaceholders[] = $orPlaceholder;
+                    }
+                    $wheres[] = "`$key` in (". implode(',', $orPlaceholders) . ")";
                 } else {
-                    $flatValues[] = $value;
+                    list ($flatValue, $placeholder) = $this->flattenValueSql($value);
+                    $flatValues[] = $flatValue;
+                    $wheres[] = "`$key` = $placeholder";
                 }
-                $wheres[] = "`$key` = $placeholder";
             }
             $query .= "WHERE " . implode(' AND ', $wheres) . " ";
         } else {
@@ -264,17 +294,8 @@ class Model extends RelationshipCache {
         $flatData = array();
         foreach ($this->columns as $col) {
             if (array_key_exists($col, $this->data)) {
-                $placeholder = ":$col";
-                if ($this->$col instanceof Model) {
-                    $flatData[$col] = $this->$col->id;
-                } else if ($this->$col instanceof DateTime) {
-                    $flatData[$col] = $this->sqlDate($this->$col);
-                } else if ($this->$col instanceof Point) {
-                    $flatData[$col] = $this->sqlPoint($this->$col);
-                    $placeholder = "GeomFromText($placeholder)";
-                } else {
-                    $flatData[$col] = $this->$col;
-                }
+                list ($flatValue, $placeholder) = $this->flattenValueSql($this->data[$col], ":$col");
+                $flatData[$col] = $flatValue;
                 $keys[] = "`$col`";
                 $values[] = $placeholder;
             }
@@ -312,17 +333,8 @@ class Model extends RelationshipCache {
         $flatData = array();
         foreach ($this->columns as $col) {
             if (array_key_exists($col, $this->data)) {
-                $placeholder = ":$col";
-                if ($this->$col instanceof Model) {
-                    $flatData[$col] = $this->$col->id;
-                } else if ($this->$col instanceof DateTime) {
-                    $flatData[$col] = $this->sqlDate($this->$col);
-                } else if ($this->$col instanceof Point) {
-                    $flatData[$col] = $this->sqlPoint($this->$col);
-                    $placeholder = "GeomFromText($placeholder)";
-                } else {
-                    $flatData[$col] = $this->$col;
-                }
+                list ($flatValue, $placeholder) = $this->flattenValueSql($this->data[$col], ":$col");
+                $flatData[$col] = $flatValue;
                 $sets[] = "`$col` = $placeholder";
             }
         }
@@ -473,23 +485,11 @@ class Model extends RelationshipCache {
     }
     public function toTsv($filehandler = null, $withCommonData = false) {
         if ($withCommonData) {
-            $fields = array_merge($this->getCommonData(), $this->data);
+            $data = array_merge($this->getCommonData(), $this->data);
         } else {
-            $fields = $this->data;
+            $data = $this->data;
         }
-        $flatValues = array();
-        foreach ($fields as $column => $value) {
-            if ($value instanceof Model) {
-                $flatValues[] = $value->id;
-            } else if ($value instanceof DateTime) {
-                $flatValues[] = $value->getTimestamp();
-            } else if ($value instanceof Point) {
-                $flatValues[] = "{$value->latitude} {$value->longitude}";
-            } else {
-                $flatValues[] = $value;
-            }
-        }
-        return array_to_tsv_line($flatValues, $filehandler);
+        return array_to_tsv_line(array_map(array($this, 'flattenValueTsv'), $data), $filehandler);
     }
 
 }
