@@ -104,17 +104,19 @@ abstract class Script {
                 } else {
                     $argNorm = $arg[1];
                 }
-                if (array_key_exists($argNorm, $normLookup)) {
-                    // Remove named from argv
-                    unset($this->argv[$i]);
-                    $inline = ($arg[1] !== '-') && (strlen($arg) > 2);
-                    if (!$inline && $this->arg($normLookup[$argNorm])) {
-                        if (count(explode('=', $arg)) == 1) {
-                            unset($this->argv[$i+1]);
-                        }
-                    }
-                } else {
+                if (!array_key_exists($argNorm, $normLookup)) {
                     $this->error("Invalid argument: $arg");
+                }
+                if (!array_key_exists($normLookup[$argNorm], $this->args)) {
+                    $this->error("Missing value for argument: $arg");
+                }
+                // Remove named from argv
+                unset($this->argv[$i]);
+                $inline = ($arg[1] !== '-') && (strlen($arg) > 2);
+                if (!$inline && $this->arg($normLookup[$argNorm])) {
+                    if (count(explode('=', $arg)) == 1) {
+                        unset($this->argv[$i+1]);
+                    }
                 }
             }
         }
