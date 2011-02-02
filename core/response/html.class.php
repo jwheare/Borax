@@ -44,9 +44,7 @@ class Html extends Base {
         // Use output buffering to store the file's output
         ob_start();
         include $this->getTemplateFile($template);
-        $output = ob_get_contents();
-        // Wipe buffer
-        ob_end_clean();
+        $output = ob_get_clean();
         return $output;
     }
     public function out ($template, array $context = array()) {
