@@ -16,8 +16,7 @@ class Dump {
         // Dump into a buffer
         ob_start();
         var_dump($var);
-        $dump = ob_get_contents();
-        ob_end_clean();
+        $dump = ob_get_clean();
         if ($xdebug) {
             $output .= $dump;
         } else {
@@ -37,8 +36,7 @@ class Dump {
         ob_start();
         print_r($var);
         print_r("\n");
-        $output = ob_get_contents();
-        ob_end_clean();
+        $output = ob_get_clean();
         if (headers_sent()) {
             echo $output;
         } else {
