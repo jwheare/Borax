@@ -11,6 +11,9 @@ class HttpRequest {
     protected $cookies = array();
     protected $cookieString = '';
     
+    public $followLocation;
+    public $multipart;
+    
     public function __construct() {
         $curl = curl_init();
         /* Curl settings */
@@ -60,8 +63,15 @@ class HttpRequest {
     protected function preparePost($requestParams = array()) {
         curl_setopt_array($this->curl, array(
             CURLOPT_POST       => true,
-            CURLOPT_POSTFIELDS => Url::encodePairsToString($requestParams),
+            CURLOPT_POSTFIELDS => $this->processPostFields($requestParams),
         ));
+    }
+    protected function processPostFields ($requestParams = array()) {
+        if ($this->multipart) {
+            return $requestParams;
+        } else {
+            return Url::encodePairsToString($requestParams);
+        }
     }
     protected function preparePut($requestParams = array()) {
         curl_setopt_array($this->curl, array(
@@ -74,11 +84,11 @@ class HttpRequest {
             CURLOPT_POSTFIELDS    => $requestParams,
         ));
     }
-    public function send($url, $method = 'GET', $requestParams = array(), $headers = array(), $followLocation = true) {
+    public function send($url, $method = 'GET', $requestParams = array(), $headers = array()) {
         // Initialise curl 
         $this->setHeaders($headers);
         curl_setopt_array($this->curl, array(
-            CURLOPT_FOLLOWLOCATION => $followLocation,
+            CURLOPT_FOLLOWLOCATION => $this->followLocation,
             CURLOPT_COOKIE         => $this->cookieString,
             CURLOPT_CUSTOMREQUEST  => $method,
         ));
@@ -107,9 +117,11 @@ class HttpRequest {
         // Send request response
         $response = curl_exec($this->curl);
         $httpInfo = curl_getinfo($this->curl);
-        $httpInfo['request_headers'] = curl_getinfo($this->curl, CURLINFO_HEADER_OUT);
         $httpInfo['response_headers'] = $this->response_headers;
-        // echo("$response\n==============\nurl: $url\nparams: " . Url::encodePairsToString($requestParams) . "\n==============\n{$httpInfo['request_headers']}\n");
+        // echo("$response\n==============\nurl: $url\nparams: " . Url::encodePairsToString($requestParams) . "\n");
+        // if (isset($httpInfo['request_header'])) {
+        //     echo("==============\n{$httpInfo['request_header']}\n");
+        // }
         self::$lastRequestInfo = $httpInfo;
         $httpCode = $httpInfo['http_code'];
         // Store cookies
@@ -130,7 +142,7 @@ class HttpRequest {
             $curlError = "cURL error: " . curl_error($this->curl) . " (" . curl_errno($this->curl) . ")";
             throw new HttpRequestException(HttpStatus\Base::mapCodeToStatus(504), $method, $url, $requestParams, null, null, $curlError);
         }
-        if (!$followLocation && $httpCode > 300 && $httpCode < 400) {
+        if (!$this->followLocation && $httpCode > 300 && $httpCode < 400) {
             // Helpfully extract the location header
             if (isset($this->response_headers[$url]) && isset($this->response_headers[$url]['location'])) {
                 $httpInfo['location_header'] = $this->response_headers[$url]['location'];
