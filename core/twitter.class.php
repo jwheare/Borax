@@ -15,6 +15,7 @@ class Twitter {
     var $secret = null;
     
     var $followLocation = true;
+    var $multipart = false;
     
     public function __construct($token = null, $secret = null) {
         if ($token && $secret) {
@@ -34,7 +35,9 @@ class Twitter {
         }
         try {
             $request = new HttpRequest();
-            list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers, $this->followLocation);
+            $request->multipart = $this->multipart;
+            $request->followLocation = $this->followLocation;
+            list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers);
         } catch (HTTPRequestException $e) {
             switch ($e->getHttpCode()) {
             case 400:
@@ -253,7 +256,11 @@ class Twitter {
         // Merge in extra params
         $authParams = $this->getOAuthParams();
         // Sign
-        $signature = $this->generateSignature(array_merge($authParams, $callParams), $url, $method);
+        $sigParams = $authParams;
+        if (!$this->multipart) {
+            $sigParams = array_merge($sigParams, $callParams);
+        }
+        $signature = $this->generateSignature($sigParams, $url, $method);
         $authParams['oauth_signature'] = $signature;
         // Encode pairs
         $encodedPairs = Url::encodePairs($authParams, true);
