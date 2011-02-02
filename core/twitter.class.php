@@ -144,6 +144,18 @@ class Twitter {
             'cursor' => $cursor,
         ));
     }
+    public function updateProfileImage ($fileName, $mimeType = null) {
+        $this->multipart = true;
+        $curlFilePath = "@$fileName";
+        if ($mimeType) {
+            $curlFilePath .= ";type=$mimeType";
+        }
+        $result = $this->post('account/update_profile_image.json', array(
+            'image' => $curlFilePath,
+        ));
+        $this->multipart = false;
+        return $result;
+    }
     public function updateStatus($status, $reply = null, $place = null, Point $point = null) {
         $params = array(
             'status' => $status,
