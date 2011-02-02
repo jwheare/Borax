@@ -22,6 +22,9 @@ abstract class Shared {
         return call_user_func_array(array($this->controller, $method), $args);
     }
     protected function action () {
+        if (!method_exists($this, $this->action)) {
+            return false;
+        }
         return $this->{$this->action}();
     }
     public function setUp () {
@@ -29,8 +32,6 @@ abstract class Shared {
     }
     public function processSetUp () {
         $this->setUp();
-        if (is_callable(array($this, $this->action))) {
-            $this->action();
-        }
+        $this->action();
     }
 }
