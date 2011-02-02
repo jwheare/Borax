@@ -72,6 +72,9 @@ class Dispatcher {
         }
         return array($name, $type, $action, $args);
     }
+    protected function doesControllerActionExist ($controllerClass, $action) {
+        return class_exists($controllerClass) && method_exists($controllerClass, $action);
+    }
     protected function getControllerSupport ($controllerRoot, $action, $requestMethod) {
         $methods = array();
         $mimeTypes = array();
@@ -79,7 +82,7 @@ class Dispatcher {
         foreach ($classes as $mimeType => $typeClasses) {
             foreach ($typeClasses as $type => $method) {
                 $controllerClass = $controllerRoot . $type;
-                if (class_exists($controllerClass) && is_callable(array($controllerClass, $action))) {
+                if ($this->doesControllerActionExist($controllerClass, $action)) {
                     $methods[] = $method;
                     if ($requestMethod === $method) {
                         $mimeTypes[] = $mimeType;
@@ -117,7 +120,7 @@ class Dispatcher {
         $controllerRoot = "App\\Controller\\{$name}";
         $controllerClass = $controllerRoot . $type;
         
-        if (!class_exists($controllerClass) || !is_callable(array($controllerClass, $action))) {
+        if (!$this->doesControllerActionExist($controllerClass, $action)) {
             
             // There's no valid action for this request. Check if the URL is available for other request types
             $requestMethod = $request->getMethod();
