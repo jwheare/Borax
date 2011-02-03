@@ -461,11 +461,6 @@ class Model extends RelationshipCache {
         }
         return implode(', ', $selects);
     }
-    public function fuckBitly() {
-        $shorter = Url::addHost($this->getShortUrl(), shortHost());
-        header("Link: <$shorter>; rev=canonical");
-        return $shorter;
-    }
     public function getFieldsSql($withCommonData = false) {
         if ($withCommonData) {
             $fields = array_merge(array_keys($this->getCommonData()), $this->columns);
