@@ -55,6 +55,8 @@ abstract class Base {
         foreach ($this->headers as $name => $value) {
             header("$name: $value");
         }
-        echo $this->getBody();
+        $body = $this->getBody();
+        header("Content-Length: " . strlen($body));
+        echo $body;
     }
 }
