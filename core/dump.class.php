@@ -26,10 +26,7 @@ class Dump {
         if ($highlight) {
             $output .= '</div>';
         }
-        self::$output .= $output;
-        if (!headers_sent()) {
-            self::flush();
-        }
+        echo $output;
     }
     public static function light ($var) {
         // Dump into a buffer
@@ -37,15 +34,6 @@ class Dump {
         print_r($var);
         print_r("\n");
         $output = ob_get_clean();
-        if (headers_sent()) {
-            echo $output;
-        } else {
-            self::$output .= $output;
-        }
-    }
-    public static function flush () {
-        echo ob_get_clean();
-        echo self::$output;
-        self::$output = '';
+        echo $output;
     }
 }

@@ -55,7 +55,6 @@ abstract class Base {
         foreach ($this->headers as $name => $value) {
             header("$name: $value");
         }
-        Dump::flush();
         echo $this->getBody();
     }
 }

@@ -33,8 +33,6 @@ spl_autoload_register(function ($class) {
     return spl_autoload(str_replace('\\', '/', $class));
 });
 
-register_shutdown_function(array('Core\Dump', 'flush'));
-
 require_once('util.php');
 require_once('conf.php');
 require_once(gethostname() . '.conf.php');
