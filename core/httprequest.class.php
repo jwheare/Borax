@@ -37,10 +37,7 @@ class HttpRequest {
         // Don't cache
         $headers[] = 'Cache-Control: no-cache, max-age=0';
         
-        // A couple of request headers cause trouble with the Twitter API
-        // It seems PHP curl just started setting them, so let's strip them
-        // Content-Length: -1
-        // $headers[] = 'Content-Length:'; // TODO disabled: this causes issues for POST requests, maybe needs special casing for GET on some servers
+        // This causes trouble with the Twitter API
         // Expect: 100-Continue
         // http://matthom.com/archive/2008/12/29/php-curl-disable-100-continue-expectation
         // http://groups.google.com/group/twitter-development-talk/browse_thread/thread/7c67ff1a2407dee7
