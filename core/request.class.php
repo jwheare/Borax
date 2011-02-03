@@ -43,8 +43,11 @@ class Request {
         $key = strtoupper($key);
         return array_key_exists($key, $this->server) ? $this->server[$key] : $default;
     }
+    public function hasCookie ($key) {
+        return array_key_exists($key, $this->cookie);
+    }
     public function cookie ($key, $default = null) {
-        return array_key_exists($key, $this->cookie) ? $this->cookie[$key] : $default;
+        return $this->hasCookie($key) ? $this->cookie[$key] : $default;
     }
     public function get ($key, $default = null) {
         return array_key_exists($key, $this->get) ? $this->get[$key] : $default;
