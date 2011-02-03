@@ -26,6 +26,7 @@ class Web {
         
         // Process the request
         $response = $dispatcher->processRequest($request);
+        $response->setHeaders($session->getHeaders());
         // Render the response
         $response->respond();
     }

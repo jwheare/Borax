@@ -6,6 +6,8 @@ class Session {
     private $session;
     protected $request;
     protected $user = null;
+    protected $headers = array();
+    
     const SESS_KEY = "session_var";
     
     public function __construct(Request $request, &$session = false) {
@@ -53,9 +55,8 @@ class Session {
     public function isStarted () {
         return is_array($this->session);
     }
-    // TODO use request class
     public function hasCookie () {
-        return isset($_COOKIE[session_name()]);
+        return $this->request->hasCookie(session_name());
     }
     public function set ($key, $value) {
         $this->startSession();
@@ -72,16 +73,30 @@ class Session {
         unset($this->session[$key]);
         return $value;
     }
+    protected function setHeader ($name, $value) {
+        $this->headers[$name] = $value;
+    }
+    protected function setHeaders ($headers) {
+        $this->headers = array_merge($this->headers, $headers);
+    }
+    public function getHeaders () {
+        return $this->headers;
+    }
     public function nocache () {
-        header('Expires: ' . gmdate("D, d M Y H:i:s", time() - 60*60*24*365) . ' GMT');
-        header('Cache-control: no-cache, must-revalidate');
-        header('Pragma: no-cache');
+        $expires = -60*60*24*365;
+        $this->setHeaders(array(
+            'Expires'       => gmdate("D, d M Y H:i:s", time() + $expires) . ' GMT',
+            'Cache-control' => 'no-cache, must-revalidate',
+            'Pragma'        => 'no-cache',
+        ));
     }
     public function cache () {
         $expires = 60*60*24*30;
-        header('Expires: ' . gmdate("D, d M Y H:i:s", time() + $expires) . ' GMT');
-        header('Cache-control: public, max-age=' . $expires);
-        header('Vary: cookie');
+        $this->setHeaders(array(
+            'Expires'       => gmdate("D, d M Y H:i:s", time() + $expires) . ' GMT',
+            'Cache-control' => 'public, max-age=' . $expires,
+            'Vary'          => 'cookie',
+        ));
     }
     public function getUser() {
         return $this->user;
