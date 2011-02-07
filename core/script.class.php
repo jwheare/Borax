@@ -95,7 +95,9 @@ abstract class Script {
         foreach ($opts as $key => $val) {
             $this->setArg($normLookup[$key], $val);
         }
-        foreach ($this->argv as $i => $arg) {
+        $i = 0;
+        while (next($this->argv)) {
+            $arg = $this->argv[$i];
             if (strpos($arg, '-') === 0) {
                 // Check for invalid argument
                 if ($arg[1] === '-') {
@@ -107,18 +109,20 @@ abstract class Script {
                 if (!array_key_exists($argNorm, $normLookup)) {
                     $this->error("Invalid argument: $arg");
                 }
-                if (!array_key_exists($normLookup[$argNorm], $this->args)) {
+                if (!$this->argExists($normLookup[$argNorm], $this->args)) {
                     $this->error("Missing value for argument: $arg");
                 }
                 // Remove named from argv
                 unset($this->argv[$i]);
                 $inline = ($arg[1] !== '-') && (strlen($arg) > 2);
+                // Unset the next argv param unless it was set inline or is missing
                 if (!$inline && $this->arg($normLookup[$argNorm])) {
                     if (count(explode('=', $arg)) == 1) {
-                        unset($this->argv[$i+1]);
+                        unset($this->argv[++$i]);
                     }
                 }
             }
+            $i++;
         }
         $this->argv = array_values($this->argv);
     }
