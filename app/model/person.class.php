@@ -51,24 +51,4 @@ class Person extends Model {
     public function isSessionUser(Session $session) {
         return $this->equals($session->getUser());
     }
-    public function setSetting($key, $value) {
-        $kv = new PersonKeyValue(array(
-            'person' => $this->id,
-            'key' => $key,
-        ));
-        $kv->load();
-        $kv->value = $value;
-        $kv->save();
-        return $kv;
-    }
-    public function getSetting($key) {
-        $kv = new PersonKeyValue(array(
-            'person' => $this->id,
-            'key' => $key,
-        ));
-        if ($kv->load()) {
-            return $kv->getValue();
-        }
-        return null;
-    }
 }
