@@ -79,6 +79,9 @@ app/                            // Example app
 |
 |-- route.class.php             // Url routes
 |
+|-- schema/                     // Model database schemas
+|   --- person.mysql.sql        // Person table schema
+|
 |-- service/                    // Services
 |   --- db.service.php          // mysql database
 |   --- memcache.service.php    // memcache
