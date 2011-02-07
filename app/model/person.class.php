@@ -15,7 +15,7 @@ class Person extends Model {
         'access_token',
         'poster',
     );
-    protected $getByColumns = array('twitter_id', 'name');
+    protected $getByColumns = array('twitter_id');
     protected $relations = array(
         'poster' => array('person', 'id'),
     );
