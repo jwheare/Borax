@@ -1,4 +1,4 @@
 <?php
 
-require_once('service/db.php');
-require_once('service/memcache.php');
+require_once('db.service.php');
+require_once('memcache.service.php');
