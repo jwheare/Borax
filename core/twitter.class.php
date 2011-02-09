@@ -28,16 +28,21 @@ class Twitter {
     protected function callUrl($url, $method, $callParams = array(), $forceAuth = false) {
         $headers = array(
             // http://groups.google.com/group/twitter-development-talk/browse_thread/thread/3c859b7774b1e95d
-            "X-Twitter-Content-Type-Accept: application/x-www-form-urlencoded",
+            'X-Twitter-Content-Type-Accept' => 'application/x-www-form-urlencoded',
         );
         if ($this->token || $forceAuth) {
-            $headers[] = $this->buildAuthorizationHeader($url, $method, $callParams);
+            $headers['Authorization'] = $this->buildAuthorizationHeader($url, $method, $callParams);
         }
         try {
             $request = new HttpRequest();
             $request->multipart = $this->multipart;
             $request->followLocation = $this->followLocation;
-            list($response, $httpInfo) = $request->send($url, $method, $callParams, $headers);
+            
+            $formattedHeaders = array();
+            foreach ($headers as $k => $v) {
+                $formattedHeaders[] = "$k: $v";
+            }
+            list($response, $httpInfo) = $request->send($url, $method, $callParams, $formattedHeaders);
         } catch (HTTPRequestException $e) {
             switch ($e->getHttpCode()) {
             case 400:
@@ -165,7 +170,7 @@ class Twitter {
         }
         if ($place) {
             $params['place_id'] = $place;
-        } else if ($point) {
+        } else if ($point && $point->latitude && $point->longitude) {
             $params['lat'] = $point->latitude;
             $params['long'] = $point->longitude;
         }
@@ -277,7 +282,7 @@ class Twitter {
         // Encode pairs
         $encodedPairs = Url::encodePairs($authParams, true);
         // Write the header
-        $header = 'Authorization: OAuth realm="' . $url . '", '
+        $header = 'OAuth realm="' . $url . '", '
                . implode(', ', $encodedPairs);
         return $header;
     }
@@ -342,5 +347,46 @@ class TwitterException extends Exception {
     }
     public function getStatusLine() {
         return "{$this->getCode()} {$this->getMessage()}";
+    }
+    public function parseError () {
+        if (is_object($response = json_decode($this->response))) {
+            if (isset($response->errors)) {
+                return $response->errors;
+            }
+            if (isset($response->error)) {
+                return $response->error;
+            }
+        }
+    }
+    public function debugString () {
+        $str = "{$this->method} {$this->url}\n";
+        if ($this->params) {
+            $maxKeyLength = max(array_map('strlen', array_keys($this->params)));
+            foreach ($this->params as $k => $v) {
+                $str .= sprintf("%s %-{$maxKeyLength}s => [%s]\n", str_repeat(' ', strlen($this->method)), $k, $v);
+            }
+        }
+        if ($error = $this->parseError()) {
+            $str .= "\n$error\n";
+        }
+        if ($this->headers) {
+            $str .= "\nRequest Headers";
+            $str .= "\n---------------\n";
+            $maxKeyLength = max(array_map('strlen', array_keys($this->headers)));
+            foreach ($this->headers as $k => $v) {
+                $str .= sprintf("%-{$maxKeyLength}s => %s\n", $k, $v);
+            }
+        }
+        $str .= "\n{$this->getStatusLine()}\n";
+        if ($this->responseHeaders) {
+            $str .= "\nResponse Headers";
+            $str .= "\n----------------\n";
+            $maxKeyLength = max(array_map('strlen', array_keys($this->responseHeaders)));
+            foreach ($this->responseHeaders as $k => $v) {
+                $str .= sprintf("%-{$maxKeyLength}s => %s\n", $k, $v);
+            }
+        }
+        $str .= "\n{$this->response}\n";
+        return $str;
     }
 }
