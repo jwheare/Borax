@@ -146,6 +146,11 @@ abstract class Script {
         }
         exit($status);
     }
+    protected function cancel () {
+        $this->end = true;
+        $this->onCancel();
+        exit(0);
+    }
     protected function end () {
         $this->end = true;
         $this->onEnd();
