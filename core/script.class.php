@@ -34,6 +34,9 @@ abstract class Script {
     protected function onEnd () {
         // overrite in subclass
     }
+    protected function onCancel () {
+        // overrite in subclass
+    }
     protected function onError () {
         // overrite in subclass
     }
@@ -139,7 +142,6 @@ abstract class Script {
     }
     protected function error ($string = null, $status = 1) {
         $this->end = true;
-        $this->error = true;
         $this->onError();
         if ($string) {
             $this->warn($string);
