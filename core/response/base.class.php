@@ -51,12 +51,16 @@ abstract class Base {
     }
     public function respond () {
         $this->beforeRespond();
-        header("HTTP/1.1 {$this->getStatus()}");
-        foreach ($this->headers as $name => $value) {
-            header("$name: $value");
+        if (!headers_sent()) {
+            header("HTTP/1.1 {$this->getStatus()}");
+            foreach ($this->headers as $name => $value) {
+                header("$name: $value");
+            }
         }
         $body = $this->getBody();
-        header("Content-Length: " . strlen($body));
+        if (!headers_sent()) {
+            header("Content-Length: " . strlen($body));
+        }
         echo $body;
     }
 }
