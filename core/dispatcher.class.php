@@ -162,7 +162,7 @@ class Dispatcher {
             error_log($error);
         }
         if (defined('MAIL_ERRORS') && MAIL_ERRORS) {
-            Email::sendRaw(SITE_EMAIL, '[' . SITE_NAME . '] Error', $error);
+            Email::sendRaw(SITE_EMAIL, '[' . SITE_NAME . '] Error', "$error\n\n" . Dump::light($this->request, true));
         }
     }
     
