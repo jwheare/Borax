@@ -10,15 +10,15 @@ class Web {
         );
     }
     public function handleRequest () {
-        // Setup the dispatcher with App URL patterns
-        $dispatcher = new Dispatcher(array_merge(App\Route::getPatterns(), self::getPatterns()));
-        
         // Encapsulate an HTTP request
         $request = new Request();
         // Don't show HTML errors for JSON
         if ($request->acceptJson()) {
             ini_set('html_errors', 0);
         }
+        
+        // Setup the dispatcher with App URL patterns
+        $dispatcher = new Dispatcher($request, array_merge(App\Route::getPatterns(), self::getPatterns()));
         
         // Encapsulate the user session
         $session = new App\Session($request);
