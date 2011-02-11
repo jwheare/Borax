@@ -12,5 +12,6 @@ class MethodNotAllowed extends BaseError {
     }
     public function processResponse (Response\Base $response) {
         $response->setHeader('Allow', implode(', ', $this->allowedMethods));
+        parent::processResponse($response);
     }
 }
