@@ -29,11 +29,6 @@ class Dump {
         echo $output;
     }
     public static function light ($var) {
-        // Dump into a buffer
-        ob_start();
-        print_r($var);
-        print_r("\n");
-        $output = ob_get_clean();
-        echo $output;
+        return print_r($var, true) . "\n";
     }
 }
