@@ -21,7 +21,7 @@ class Web {
         $dispatcher = new Dispatcher($request, array_merge(App\Route::getPatterns(), self::getPatterns()));
         
         // Encapsulate the user session
-        $session = new App\Session($request);
+        $session = new Session($request);
         $request->setSession($session);
         
         // Process the request
