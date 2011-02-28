@@ -102,7 +102,11 @@ class Model extends RelationshipCache {
             unset($data["{$keyPrefix}id"]);
         }
         if (array_key_exists("{$keyPrefix}creation_date", $data)) {
-            $this->creation_date = new DateTime($data["{$keyPrefix}creation_date"]);
+            $creationDate = $data["{$keyPrefix}creation_date"];
+            if (!$creationDate instanceof DateTime) {
+                $creationDate = new DateTime($creationDate);
+            }
+            $this->creation_date = $creationDate;
             unset($data["{$keyPrefix}creation_date"]);
         }
         foreach ($this->columns as $column) {
