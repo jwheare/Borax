@@ -23,6 +23,10 @@ class Person extends Model {
     public function getTwitterUrl() {
         return "http://twitter.com/{$this->twitter_name}";
     }
+    public function twitter () {
+        $twitter = new Twitter($this->twitter_access_token, $this->twitter_access_token_secret);
+        return $twitter;
+    }
     
     protected function createAccessToken() {
         return sha1(uniqid(mt_rand(), true));
