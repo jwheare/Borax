@@ -105,6 +105,7 @@ app/                            // Full example app
 
 script/                         // script runners
 |-- twitterinfo.php             // runs the app script class
+|-- initdb.php                  // runs the core script class
 
 util.php                        // global php helper functions
 
@@ -155,6 +156,7 @@ core/                           // Core framework classes
 |   --- redirect.class.php
 |
 |-- script.class.php            // Script class, with helpers for handling command line args
+|-- initdbscript.class.php      // Creates a new database and username
 |
 |-- servicemanager.class.php    // Static global services manager
 |
