@@ -62,7 +62,7 @@ app/                            // Example app
 |
 |-- conf/                       // Conf
 |   --- conf.php                // global conf
-|   --- gethostname().conf.php  // local host specific conf. rename this to the result of gethostname() . ".conf.php"
+|   --- local.conf.php          // local host specific conf. rename this to your system hostname, followed by ".conf.php"
 |
 |-- controller/                 // Controllers
 |   --- home.controller.php     // GET /                  - home page
@@ -73,6 +73,7 @@ app/                            // Example app
 |-- init.php                    // App setup/service registration
 |
 |-- lib/                        // Lib directory on include path for app specific libs
+|   --- date.class.php          // Misc date helpers
 |
 |-- model/                      // Models
 |   --- person.class.php        // Person database model
@@ -81,6 +82,9 @@ app/                            // Example app
 |
 |-- schema/                     // Model database schemas
 |   --- person.mysql.sql        // Person table schema
+|
+|-- script/                     // Script classes that extend Core\Script
+|-- twitterinfo.class.php       // Looks up twitter user info, optionally authenticated with a user, or manual credentials
 |
 |-- service/                    // Services
 |   --- db.service.php          // mysql database
@@ -94,10 +98,11 @@ app/                            // Example app
 |   --- header.inc.tpl.php      // global header
 |   --- home/
 |       --- index.tpl.php       // home page
-|   --- _page/                  // page templates have no controller
+|   --- _page/                  // page templates with no controller
+|       --- about.tpl.php       // about page
 
-script/                         // example script
-|-- tweet.php                   // updates twitter status for an authorised user
+script/                         // script runners
+|-- twitterinfo.php             // runs the app script class
 
 util.php                        // global php helper functions
 
@@ -146,6 +151,8 @@ core/                           // Core framework classes
 |   --- json.class.php
 |   --- jsonerror.class.php
 |   --- redirect.class.php
+|
+|-- script.class.php            // Script class, with helpers for handling command line args
 |
 |-- servicemanager.class.php    // Static global services manager
 |
