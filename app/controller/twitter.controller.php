@@ -13,9 +13,9 @@ class TwitterHtml extends Controller\Html {
         // Step 1 - Get request token
         // http://oauth.net/core/1.0a/#auth_step1
         try {
-            $callback = null;
+            $callback = '/twitter/callback';
             if ($next = $this->request->postget('next')) {
-                $callback = Url::addHost($this->request->getSession()->addNext('/twitter/callback', $next));
+                $callback = $this->request->getSession()->addNext($callback, $next);
             }
             $twitter = new Twitter();
             $requestTokenParams = $twitter->getRequestToken($this->request, $callback);
