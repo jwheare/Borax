@@ -58,7 +58,9 @@ FILE OVERVIEW:
 
 apache-vhost.conf               // apache virtualhost configuration
 
-app/                            // Example app
+stub/                           // Minimal stub app
+
+app/                            // Full example app
 |
 |-- conf/                       // Conf
 |   --- conf.php                // global conf
