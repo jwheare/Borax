@@ -94,7 +94,7 @@ app/                            // Example app
 |   --- header.inc.tpl.php      // global header
 |   --- home/
 |       --- index.tpl.php       // home page
-|   --- _page/                  // static page templates
+|   --- _page/                  // page templates have no controller
 
 script/                         // example script
 |-- tweet.php                   // updates twitter status for an authorised user
