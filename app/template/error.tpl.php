@@ -12,3 +12,5 @@ $this->out('header.inc', array(
     <p><?php echo linkify(safe($message)); ?>
     <?php } ?>
 </div>
+
+<?php $this->out('footer.inc'); ?>
