@@ -9,7 +9,7 @@ $this->out('header.inc', array(
 <div class="section">
     <h2><?php out($title); ?></h2>
     <?php if ($message) { ?>
-    <p><?php echo linkify(safe($message)); ?>
+    <p><?php echo linkify(safe($message)); ?></p>
     <?php } ?>
 </div>
 
