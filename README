@@ -90,7 +90,8 @@ app/                            // Full example app
 |
 |-- service/                    // Services
 |   --- db.service.php          // mysql database
-|   --- memcache.service.php    // memcache
+|   --- memcache.service.php    // memcache client
+|   --- memcached.service.php   // memcached client (alternate)
 |
 |-- session.class.php           // User sessions
 |
