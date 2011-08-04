@@ -64,7 +64,7 @@ app/                            // Full example app
 |
 |-- conf/                       // Conf
 |   --- conf.php                // global conf
-|   --- local.conf.php          // local host specific conf. rename this to the ServerName from your apache config, followed by ".conf.php"
+|   --- local.conf.php          // local host specific conf. rename this to your system hostname, followed by ".conf.php"
 |
 |-- controller/                 // Controllers
 |   --- home.controller.php     // GET /                  - home page
