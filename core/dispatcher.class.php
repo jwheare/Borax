@@ -216,6 +216,11 @@ class Dispatcher {
             }
             $response = $this->generateExceptionResponse($exception);
         }
+
+        if (!$response instanceOf Core\Response\Base) {
+            $this->reportError("Controller $controller->name didn\'t provide a valid response.");
+        }
+
         return $response;
     }
 }
